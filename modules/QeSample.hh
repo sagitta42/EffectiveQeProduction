@@ -15,7 +15,8 @@ class QeSample{
 
         void DarkNoise();
         void ChosenPmtBias();
-        void ScaleCone();
+        void ScaleConeData();
+        void ScaleConeMC();
 
         void Update(Run* r); // update hits and Nevents seen by each hole label
         void CalculateQE();
