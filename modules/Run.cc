@@ -1,7 +1,7 @@
 #include "Run.hh"
 #include "Technical.C"
 
-// ----------------------- constructor/destructor ----------------------- //
+// ----------------------------------------------------------------------------- //
 
 
 Run::Run(string fname){
@@ -21,18 +21,11 @@ Run::Run(string fname){
     NeventsTT64 = 0;
     NeventsCandle = 0;
     NeventsAllPmts = 0;
-    NhitsTriggerPmts = 0;
-    NhitsGeo = 0;
-    NhitsNorm = 0;
     NLivePmtsManual = 0;
 
-    n_enabled_trigger_channels = 0;
-
-    
     for(int lg = 1; lg <= 2240; lg++){
         Disabled[lg-1] = 0; // by default the channel is enabled
         Reference[lg-1] = 0; // by default the channel is not a reference channel
-        is_trigger_channel[lg-1] = 0; // by deafult a channel is not a trigger channel
     
         NhitsTT64[lg-1] = 0;
         
@@ -54,8 +47,8 @@ Run::~Run(){
 }
 
 
+// ----------------------------------------------------------------------------- //
 
-// ----------------------- calculations ----------------------- //
 
 void Run::CollectHits(double radius){
     /* main function to calculate QE */
@@ -85,14 +78,10 @@ void Run::CollectHits(double radius){
         if(!IsCandleCandidate(ev,radius)) continue;
 
         // candle A1000 geo
-//      double nhits_trigger_pmts = IsCandleA1000norm(ev, radius); // if event is not accepted, zero is returned; if it is, the hits that decided it is are returned
         double nhits_trigger_pmts = IsCandleA1000(ev); // if event is not accepted, zero is returned; if it is, the hits that decided it is are returned
         
         if(nhits_trigger_pmts){
             NeventsCandle++;
-            NhitsTriggerPmts += nhits_trigger_pmts;
-            NhitsGeo += laben.GetCluster(0).Normalize_geo_Pmts(laben.GetNClusteredHits());
-            NhitsNorm += laben.NormalizePmts(laben.GetNClusteredHits());
             
             for(int hit = 0; hit < numDecHits; hit++){
                 if(decHits[hit].GetNumCluster() == 1){
@@ -125,10 +114,7 @@ void Run::CollectHits(double radius){
 }
 
 
-
-
-
-// ----------------------- geometry  ----------------------- //
+// ----------------------------------------------------------------------------- //
 
 
 void Run::Geometry(){
@@ -146,9 +132,7 @@ void Run::Geometry(){
     int lg, hole, conc = 0;
     
     while (fmap >> lg >> hole >> conc){
-        HoleLabel[lg-1] = hole;
         ChannelID[hole] = lg; // if hole is not mapped to any channel, will be zero (default in map)
-        Conc[lg-1] = conc;
         // if hole label = 0, mark as disabled immediately
         if(!hole) Disabled[lg-1] = 1;
     }
@@ -174,7 +158,7 @@ void Run::Geometry(){
 
 }
 
-// ----------------------- electronics  ----------------------- //
+// ----------------------------------------------------------------------------- //
 
 void Run::DisabledChannels(Database* d){
     if (!d->db){
@@ -216,48 +200,7 @@ void Run::DisabledChannels(Database* d){
 }
 
 
-
-
-// ---------------------------------------------------------------- //
-
-void Run::Save(ofstream& out, ofstream& extra){
-    /* save calculations for every lg into the output file */
-
-    for(int lg = 1; lg < 2241; lg++){
-        out << runnum << " "
-            << lg << " "
-            << HoleLabel[lg-1] << " "
-            << Conc[lg-1] << " "
-            << Disabled[lg-1] << " "
-            << Reference[lg-1] << " "
-            << NhitsCandle[lg-1] << " "
-            << darkRate[lg-1] << " "
-            << tCandle[lg-1] << " "
-            << Nhits[lg-1] << " "
-            << NhitsScaled[lg-1] << " "
-            << NhitsScaledError[lg-1] << " "
-            << NhitsCorrected[lg-1] << " "
-            << NhitsCorrectedError[lg-1] << endl;
-    }
-
-    extra << runnum
-            << " " << NeventsCandle
-            << " " << NhitsTriggerPmts
-            << " " << NhitsGeo
-            << " " << NhitsNorm
-            << " " << RatioCNC
-            << " " << RatioCNCAllPmts
-            << " " << RatioTNT
-            << " " << RatioTNTAllPmts
-            << " " << NeventsAllPmts
-            << " " << NLivePmts
-            << " " << NLivePmtsManual
-            << " " << NLivePmtsA1000
-            << " " << n_enabled_trigger_channels
-            << endl;
-}
-
-// ----------------------- getters ----------------------- //
+// ----------------------------------------------------------------------------- //
 
 
 int Run::GetNevents(int lg){
