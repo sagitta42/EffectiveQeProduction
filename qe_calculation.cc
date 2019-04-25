@@ -69,10 +69,10 @@ void QEcalculation(string week, string input_folder, string output_folder){
     s->CalculateQE(); // dark noise, then chosen PMT bias, then cones
     s->SaveQE(qefile);
     
-    // weekly extra
-    string qeextra = output_folder + "/" + week + "_Week.txt";
-	cout << "--> " << qeextra << endl;
-    s->SaveExtra(qeextra);
+    // weekly extra: not save in "official" mode
+//    string qeextra = output_folder + "/" + week + "_Week.txt";
+//	cout << "--> " << qeextra << endl;
+//    s->SaveExtra(qeextra);
 	delete s;
 	
     cout << "SAVED" << endl;
