@@ -25,7 +25,6 @@ class Run{
         void Geometry(); // get hole label mapping from profileMaps
         void DisabledChannels(Database* d); // get disabled channels from db
         void CollectHits(double radius); // actual calculation
-        void Save(ofstream& out, ofstream& extra); // writing to file
         // -------------------------------- getters
         int GetRunNumber(){ return runnum; }
         int GetProfileID(){ return profileID; }
