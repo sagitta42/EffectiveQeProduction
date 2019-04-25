@@ -147,6 +147,9 @@ void QeSample::CalculateQE(){
     // *** scale for cones based on average in the week
     ScaleConeMC();
 
+    // we are NOT scaling the cone here, just calculating the ratio from data, so later we can check its evolution
+    ConeRatioData();
+
 }
 
 
@@ -244,7 +247,7 @@ void QeSample::ChosenPmtBias(){
 
 
 // ****** not used, MC scaling used instead
-void QeSample::ScaleConeData(){
+void QeSample::ConeRatioData(){
     double sum_cone = 0;
     double sum_cone_error_square = 0;
     int Ncone = 0;
@@ -304,24 +307,24 @@ void QeSample::ScaleConeData(){
     RatioCNCB900 = avg_cone_B900 / avg_nocone_B900;
     RatioCNCB900Error = RatioCNCB900 * sqrt(sum_cone_B900_error_square / pow(sum_cone_B900,2) + sum_nocone_B900_error_square / pow(sum_nocone_B900,2) );
 
-    for(int h = 0; h < Nholes; h++){
-        if(Nevents[h]){
-            // *** scale for cones
-            if(Conc[h]){
-                if(!Nhits[h]){
-                    cout << "Nhits zero: " << HoleLabel[h] << endl;
-                    continue;
-                }
-
-                NhitsCone[h] = NhitsBias[h] / RatioCNC;
-                NhitsConeError[h] = NhitsCone[h] * sqrt( abs( pow(NhitsBiasError[h]/NhitsBias[h],2) + sum_cone_error_square / pow(sum_cone,2) + sum_nocone_error_square / pow(sum_nocone,2) -  2*pow(NhitsBiasError[h],2)/sum_cone/NhitsBias[h] ) ); 
-            }
-            else{
-                NhitsCone[h] = NhitsBias[h];
-                NhitsConeError[h] = NhitsBiasError[h];
-            }
-        }
-    }
+//    for(int h = 0; h < Nholes; h++){
+//        if(Nevents[h]){
+//            // *** scale for cones
+//            if(Conc[h]){
+//                if(!Nhits[h]){
+//                    cout << "Nhits zero: " << HoleLabel[h] << endl;
+//                    continue;
+//                }
+//
+//                NhitsCone[h] = NhitsBias[h] / RatioCNC;
+//                NhitsConeError[h] = NhitsCone[h] * sqrt( abs( pow(NhitsBiasError[h]/NhitsBias[h],2) + sum_cone_error_square / pow(sum_cone,2) + sum_nocone_error_square / pow(sum_nocone,2) -  2*pow(NhitsBiasError[h],2)/sum_cone/NhitsBias[h] ) ); 
+//            }
+//            else{
+//                NhitsCone[h] = NhitsBias[h];
+//                NhitsConeError[h] = NhitsBiasError[h];
+//            }
+//        }
+//    }
 
 }
 
