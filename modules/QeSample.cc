@@ -1,11 +1,11 @@
 #include "QeSample.hh"
 
 // conversion factor from EQE (hits per event) to RQE (0.0 to 1.0)
-//const double factorScale = 33.5279149008;
-//const double factorScaleError = 0.0157191292179;
+const double factorScale = 34.4774833802;
+const double factorScaleError = 0.00721240244279;
 // no scaling mode
-const double factorScale = 1.;
-const double factorScaleError = 0;
+//const double factorScale = 1.;
+//const double factorScaleError = 0;
 // scaling for concentrators: extracted from MC
 const double factorCone = 1.489078384909734;
 const double factorConeError = 0.0007875838112872804;
@@ -243,6 +243,7 @@ void QeSample::ChosenPmtBias(){
 }
 
 
+// ****** not used, MC scaling used instead
 void QeSample::ScaleConeData(){
     double sum_cone = 0;
     double sum_cone_error_square = 0;

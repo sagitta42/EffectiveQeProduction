@@ -9,7 +9,7 @@ def mergedst(folder):
 	print 'Reading', folder
 	if folder[-1] == '/': folder = folder[:-1]
 	ffiles = os.listdir(folder)
-	ffiles = [f for f in ffiles if 'QE' in f]
+	ffiles = [f for f in ffiles if 'QE' in f and not 'ascii' in f]
 
 	print 'Sorting chronologically...'
 	# these files are not chronologically sorted
@@ -26,7 +26,7 @@ def mergedst(folder):
 	for f in fdf['Files']:
 #	for f in ffiles:
 		print f
-		df = pd.read_csv(folder + '/' + f, sep=' ')
+		df = pd.read_csv(folder + '/' + f) # new separator: comma
 #		df['Dst'] = f.split('_QE')[0] # already present in new QE
 		df['Date'] = pd.to_datetime(f.split('_QE')[0].replace('_','-'))
 
