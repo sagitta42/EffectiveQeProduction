@@ -1,11 +1,11 @@
 #include "QeSample.hh"
 
 // conversion factor from EQE (hits per event) to RQE (0.0 to 1.0)
-const double factorScale = 34.4774833802;
-const double factorScaleError = 0.00721240244279;
+//const double factorScale = 34.4774833802;
+//const double factorScaleError = 0.00721240244279;
 // no scaling mode
-//const double factorScale = 1.;
-//const double factorScaleError = 0;
+const double factorScale = 1.;
+const double factorScaleError = 0;
 // scaling for concentrators: extracted from MC
 const double factorCone = 1.489078384909734;
 const double factorConeError = 0.0007875838112872804;
@@ -36,18 +36,22 @@ QeSample::QeSample(string week){
         Nevents[h] = 0; // if in the end zero, means was disabled/reference/disconnected the whole week
         NhitsCandle[h] = 0;
         tCandle[h] = 0; // needed for dark hits subtraction
+        Qe[h] = 0;
+        QeError[h] = 0;
 
         // using all PMTs: needed for trigger bias correction
         NeventsAllPmts[h] = 0; // will scale for trigger bias based on hits/event, not hits, since can be different
         NhitsAllPmts[h] = 0; //DN subtraction will overwrite 
         tCandleAllPmts[h] = 0; // for dark noise subtraction
+        QeAllPmts[h] = 0;
+        QeAllPmtsError[h] = 0;
 
         Nhits[h] = 0;
         NhitsError[h] = 0;
-        NhitsBias[h] = 0;
-        NhitsBiasError[h] = 0;
-        NhitsCone[h] = 0;
-        NhitsConeError[h] = 0;
+        QeBias[h] = 0;
+        QeBiasError[h] = 0;
+        QeCone[h] = 0;
+        QeConeError[h] = 0;
     }
 
     n_changes = 0;
@@ -138,6 +142,19 @@ void QeSample::Update(Run* r){
 void QeSample::CalculateQE(){
     // *** subtract dark noise
     DarkNoise();
+    
+    // ** calculate "biased" QE (not final)
+    for(int h = 0; h < Nholes; h++){
+        // cannot divide if Nevents = 0, Qe = 0 as initialized for such cases
+        if(Nevents[h]){
+            Qe[h] = Nhits[h] / Nevents[h];
+            QeError[h] = NhitsError[h] / Nevents[h];
+
+            QeAllPmts[h] = NhitsAllPmts[h] / NeventsAllPmts[h];
+            QeError[h] = NhitsAllPmtsError[h] / NeventsAllPmts[h];
+        }
+    }
+            
 
     //*** calculate trigger bias correction 
     // i would still prefer to do it AFTER the cone scaling, but let's see
@@ -157,11 +174,11 @@ void QeSample::DarkNoise(){
     for(int h = 0; h < Nholes; h++){
         if(Nevents[h]){
             // *** subtract dark noise
-            DarkRate[h] = DarkHits[h] * 1. / DarkTime[h];
+            DarkRate[h] = DarkHits[h] * 1. / DarkTime[h];// dark time is total number of dark hits "seen" by this PMT (was enabled in given run) x gate length
             double DarkRateErrorSquare = DarkRate[h] / DarkTime[h];
         
             /// standard QE hits
-            double NhitsNoise = DarkRate[h] * tCandle[h];
+            double NhitsNoise = DarkRate[h] * tCandle[h];// t candle is sum of cluster lenghts in each C14 event this PMT "saw"
             double NhitsNoiseErrorSquare = DarkRateErrorSquare * pow(tCandle[h],2);
             Nhits[h] = NhitsCandle[h] - NhitsNoise;
             NhitsError[h] = sqrt(NhitsCandle[h] + NhitsNoiseErrorSquare);
@@ -196,17 +213,17 @@ void QeSample::ChosenPmtBias(){
         if(Nevents[h]){
             int hole = HoleLabel[h];
             if(is_trigger_pmt[hole]){
-                // summing hits after dark noise subtraction
-                sum_true_B900 += NhitsAllPmts[h] / NeventsAllPmts[h];
-                sum_true_B900_error_square += pow(NhitsAllPmtsError[h]/NeventsAllPmts[h],2);
-                sum_biased_B900 += Nhits[h] / Nevents[h];
-                sum_biased_B900_error_square += pow(NhitsError[h]/Nevents[h],2);
+                // summing "QE", not hits, because need to "normalize by livetime", since each PMT has seen different amount of 14C events this week
+                sum_true_B900 += QeAllPmts[h];
+                sum_true_B900_error_square += pow(QeAllPmtsError[h],2);
+                sum_biased_B900 += Qe[h];
+                sum_biased_B900_error_square += pow(QeError[h],2);
             }
             else{
-                sum_true_nonB900 += NhitsAllPmts[h] / NeventsAllPmts[h];
-                sum_true_nonB900_error_square += pow(NhitsAllPmtsError[h]/NeventsAllPmts[h],2);
-                sum_biased_nonB900 += Nhits[h] / Nevents[h];
-                sum_biased_nonB900_error_square += pow(NhitsError[h]/Nevents[h],2);
+                sum_true_nonB900 += QeAllPmts[h];
+                sum_true_nonB900_error_square += pow(QeAllPmtsError[h],2);
+                sum_biased_nonB900 += Qe[h];
+                sum_biased_nonB900_error_square += pow(QeError[h],2);
             }
         }
     }
@@ -222,9 +239,10 @@ void QeSample::ChosenPmtBias(){
         // if the channel is disabled, NhitsCorrected (and Error) will stay at 0
         if(Nevents[h]){
             int hole = HoleLabel[h];
+
             if(is_trigger_pmt[hole]){
-                NhitsBias[h] = Nhits[h];
-                NhitsBiasError[h] = NhitsError[h];
+                QeBias[h] = Qe[h];
+                QeBiasError[h] = QeError[h];
             }
             else{
                 if(!Nhits[h]){
@@ -232,8 +250,8 @@ void QeSample::ChosenPmtBias(){
                     continue;
                 }
 
-                NhitsBias[h] = Nhits[h] / Ratio_true * Ratio_biased;
-                NhitsBiasError[h] = NhitsBias[h] * sqrt( abs( pow(NhitsError[h]/Nhits[h],2) + Ratio_true_error_square_relative + Ratio_biased_error_square_relative - 2*pow(NhitsError[h],2)/sum_biased_nonB900/Nhits[h] ) ); // complex like this because sum_chosen_nontrigger includes NhitsScaled[lg-1] itself
+                QeBias[h] = Qe[h] / Ratio_true * Ratio_biased;
+                QeBiasError[h] = QeBias[h] * sqrt( pow(QeError[h]/Qe[h],2) + Ratio_true_error_square_relative + Ratio_biased_error_square_relative - 2*pow(QeError[h],2)/sum_biased_nonB900/Qe[h] ); // complex like this because sum_chosen_nontrigger includes Qe[h] itself
             }
         }
     }
@@ -268,26 +286,26 @@ void QeSample::ConeRatioData(){
         if(Nevents[h]){
             // *** scale for cones
             if(Conc[h]){
-                sum_cone += NhitsBias[h] / Nevents[h];
-                sum_cone_error_square += pow(NhitsBiasError[h] / Nevents[h], 2);
+                sum_cone += QeBias[h]; 
+                sum_cone_error_square += pow(QeBiasError[h], 2);
                 Ncone++;
 
                 // special extra for Alessio, to check evolution in time
                 if(is_trigger_pmt[hole]){
-                    sum_cone_B900 += NhitsBias[h] / Nevents[h];
-                    sum_cone_B900_error_square += pow(NhitsBiasError[h] / Nevents[h], 2);
+                    sum_cone_B900 += QeBias[h];
+                    sum_cone_B900_error_square += pow(QeBiasError[h], 2);
                     NconeB900++;
                 }
             }
             else{
-                sum_nocone += NhitsBias[h] / Nevents[h];
-                sum_nocone_error_square += pow(NhitsBiasError[h] / Nevents[h], 2);
+                sum_nocone += QeBias[h]; 
+                sum_nocone_error_square += pow(QeBiasError[h], 2);
                 Nnocone++;
                 
                 // special extra for Alessio, to check evolution in time
                 if(is_trigger_pmt[hole]){
-                    sum_nocone_B900 += NhitsBias[h] / Nevents[h];
-                    sum_nocone_B900_error_square += pow(NhitsBiasError[h] / Nevents[h], 2);
+                    sum_nocone_B900 += QeBias[h]; 
+                    sum_nocone_B900_error_square += pow(QeBiasError[h], 2);
                     NnoconeB900++;
                 }
             }
@@ -306,6 +324,8 @@ void QeSample::ConeRatioData(){
     double avg_nocone_B900 = sum_nocone_B900 / NnoconeB900;
     RatioCNCB900 = avg_cone_B900 / avg_nocone_B900;
     RatioCNCB900Error = RatioCNCB900 * sqrt(sum_cone_B900_error_square / pow(sum_cone_B900,2) + sum_nocone_B900_error_square / pow(sum_nocone_B900,2) );
+
+    // NOT CORRECTING NOW, ONLY SAVING RATIO
 
 //    for(int h = 0; h < Nholes; h++){
 //        if(Nevents[h]){
@@ -334,12 +354,12 @@ void QeSample::ScaleConeMC(){
         if(Nevents[h]){
             // *** scale for cones
             if(Conc[h]){
-                NhitsCone[h] = NhitsBias[h] / factorCone;
-                NhitsConeError[h] = NhitsCone[h] * sqrt( pow(NhitsBiasError[h]/NhitsBias[h],2) + pow(factorConeError/factorCone,2) );
+                QeCone[h] = QeBias[h] / factorCone;
+                QeConeError[h] = QeCone[h] * sqrt( pow(QeBiasError[h]/QeBias[h],2) + pow(factorConeError/factorCone,2) );
             }
             else{
-                NhitsCone[h] = NhitsBias[h];
-                NhitsConeError[h] = NhitsBiasError[h];
+                QeCone[h] = QeBias[h];
+                QeConeError[h] = QeBiasError[h];
             }
         }
     }
@@ -357,13 +377,13 @@ void QeSample::SaveQE(string output_file){
 
     // calculate for each hole ID and save
     for(int h = 0; h < Nholes; h++){
-        double Qe = Nevents[h] ? NhitsCone[h] * 1. / Nevents[h] * factorScale: 0; 
-        double QeError = Nevents[h] ? Qe * sqrt( NhitsConeError[h]/pow(NhitsCone[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
+        double Qe = Nevents[h] ? QeCone[h] * factorScale: 0; 
+        double QeError = Nevents[h] ? Qe * sqrt( pow(QeConeError[h]/QeCone[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
         // saturation
         if(Qe > 1.0) Qe = 1.0;
 
-        double QeWoc = Nevents[h] ? NhitsBias[h] * 1. / Nevents[h] * factorScale: 0;
-        double QeWocError = Nevents[h] ? sqrt( pow(NhitsBiasError[h]/NhitsBias[h],2) + pow(factorScaleError/factorScale,2) ) / Nevents[h] : 0; //
+        double QeWoc = Nevents[h] ? QeBias[h] * factorScale: 0;
+        double QeWocError = Nevents[h] ? QeWoc * sqrt( pow(QeBiasError[h]/QeBias[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
 
         int Status = Nevents[h] ? 1 : 2; // for now only "enabled" and "disabled" with no "discarded"
 
@@ -381,8 +401,8 @@ void QeSample::SaveQE(string output_file){
                 << sep << QeWoc
                 << sep << QeWocError
                 << sep << NhitsCandle[h]
-                << sep << NhitsCone[h]
-                << sep << NhitsBias[h]
+                << sep << QeCone[h] * Nevents[h]
+                << sep << QeBias[h] * Nevents[h]
                 << sep << Nevents[h]
                 << sep << Nevents[h]*1. / NeventsTotal
                 << sep << Nruns[h]*1. / NrunsTotal
