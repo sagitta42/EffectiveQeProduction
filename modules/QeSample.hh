@@ -45,10 +45,12 @@ class QeSample{
         double tCandle[Nholes]; // total summed time of 14C clusters (when enabled)
         double Nhits[Nholes]; // subtracting dark noise
         double NhitsError[Nholes]; 
-        double NhitsBias[Nholes]; // trigger bias corrected
-        double NhitsBiasError[Nholes];
-        double NhitsCone[Nholes]; // hits after correcting for cones
-        double NhitsConeError[Nholes]; 
+        double Qe[Nholes];
+        double QeError[Nholes];
+        double QeBias[Nholes]; // trigger bias corrected
+        double QeBiasError[Nholes];
+        double QeCone[Nholes]; // hits after correcting for cones
+        double QeConeError[Nholes]; 
         double Ratio_true;
         double Ratio_true_error;
         double Ratio_biased;
@@ -66,6 +68,8 @@ class QeSample{
         double NhitsAllPmts[Nholes]; // needed for the "true" ratio
         double NhitsAllPmtsError[Nholes]; // needed for the "true" ratio
         double tCandleAllPmts[Nholes]; // total summed time of 14C clusters (when enabled)
+        double QeAllPmts[Nholes];
+        double QeAllPmtsError[Nholes];
 
         int n_changes; // how many changes there were of profileID
         int prev_profile;
