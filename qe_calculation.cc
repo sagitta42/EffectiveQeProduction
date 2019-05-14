@@ -34,6 +34,11 @@ void QEcalculation(string week, string input_folder, string output_folder){
 	cout << flistpath << endl;
 	ifstream flist(flistpath.c_str()); // list of Echidna runs
 
+    if(!flist){
+        cerr << "qe_calculation Error: list " << flistpath << " not found!" << endl;
+        exit(EXIT_FAILURE);
+    }
+
 	// final output for QE
 	string qefile = output_folder + "/" + week + "_QE.txt";
 	cout << "--> " << qefile << endl;

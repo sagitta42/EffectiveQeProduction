@@ -6,6 +6,12 @@
 
 Run::Run(string fname){
     f = TFile::Open(fname.c_str());
+
+    if(!f){
+        cerr << "Run " << fname << " not found!" << endl;
+        exit(EXIT_FAILURE);
+    }
+
     f->GetObject("bxtree",t);
     ev = new BxEvent();
     t->SetBranchAddress("events", &ev);

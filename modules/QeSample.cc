@@ -1,11 +1,11 @@
 #include "QeSample.hh"
 
 // conversion factor from EQE (hits per event) to RQE (0.0 to 1.0)
-//const double factorScale = 34.4774833802;
-//const double factorScaleError = 0.00721240244279;
+const double factorScale = 34.4605211891;
+const double factorScaleError = 0.00932839488594;
 // no scaling mode
-const double factorScale = 1.;
-const double factorScaleError = 0;
+//const double factorScale = 1.;
+//const double factorScaleError = 0;
 // scaling for concentrators: extracted from MC
 const double factorCone = 1.489078384909734;
 const double factorConeError = 0.0007875838112872804;
@@ -418,9 +418,10 @@ void QeSample::SaveQE(string output_file){
 void QeSample::SaveExtra(string qeextra){
     // extra once per week
     ofstream extra(qeextra.c_str());
-    extra << "Week,Ratio_true,Ratio_true_error,Ratio_biased,Ratio_biased_error,RatioBT,RatioBTError,RatioCNC,RatioCNCError,RatioCNCB900,RatioCNCB900Error" << endl;
+    extra << "Week,Nevents,Ratio_true,Ratio_true_error,Ratio_biased,Ratio_biased_error,RatioBT,RatioBTError,RatioCNC,RatioCNCError,RatioCNCB900,RatioCNCB900Error" << endl;
     string sep = ",";
     extra << Week
+        << sep << NeventsTotal
         << sep << Ratio_true
         << sep << Ratio_true_error
         << sep << Ratio_biased
