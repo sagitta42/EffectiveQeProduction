@@ -7,7 +7,7 @@ const int Nholes = 2212;
 
 class QeSample{
     public:
-        QeSample(string week);
+        QeSample(string week, int run_min=0, int run_max=0);
         ~QeSample(){};
 
         void HoleLabels();
@@ -25,6 +25,7 @@ class QeSample{
 
     private:
         string Week;
+        int rmin, rmax; // 0 in case of a normal week, defined in case of a stretched week
 
         int HoleLabel[Nholes]; // each hole label has an index from 0 to Nholes in the array
         int Conc[Nholes];

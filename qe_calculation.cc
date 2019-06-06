@@ -4,30 +4,34 @@
 
 using namespace std;
 
-void QEcalculation(string week, string input_folder, string output_folder);
+void QEcalculation(string week, string input_folder, string output_folder, int rmin, int rmax);
 
 const double radius = 2;
 
 int main(int argc, char* argv[]){
-	if(argc != 4){
+	if(argc != 4 && argc != 6){
 		cout << "Format ./qe_calculation week input_folder output_folder" << endl;
+		cout << "Or ./qe_calculation week input_folder output_folder run_min run_max" << endl;
 		cout << "week: YYYY_MMM_DD" << endl;
 		cout << "input_folder: folder in which YYYY_MMM_DD.list is stored" << endl;
 		cout << "output_folder: where the outputs *_QePerRun.txt, *_RunInfo.txt and *_QE.txt will go" << endl;
+        cout << "run_min and run_max: definition of the 'boundaries' of the week (in case of a stretched week)" << endl;
 		return 1;
 	}
 
 	string week = argv[1]; // list of Echidna runs
 	string input_folder = argv[2];
 	string output_folder = argv[3];
+    int rmin = argc > 4 ? atoi(argv[4]) : 0;
+    int rmax = argc > 4 ? atoi(argv[5]) : 0;
 
-	QEcalculation(week, input_folder, output_folder);
+	QEcalculation(week, input_folder, output_folder, rmin, rmax);
 }
 
 
 
 //void QEcalculation(string flistname, string trigger_pmts_folder, int numchan, string triggerids){
-void QEcalculation(string week, string input_folder, string output_folder){
+void QEcalculation(string week, string input_folder, string output_folder, int rmin, int rmax){
 	cout << "Calculating with radius: " << radius << " m" << endl;
 
 	string flistpath = input_folder + "/" + week + ".list";
@@ -44,7 +48,7 @@ void QEcalculation(string week, string input_folder, string output_folder){
 	cout << "--> " << qefile << endl;
 
 	// info for the time window
-	QeSample* s = new QeSample(week);
+	QeSample* s = new QeSample(week, rmin, rmax);
 	// database
 	Database* d = new Database(); // opens DB
 	string fname;

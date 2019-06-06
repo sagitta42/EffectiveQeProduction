@@ -11,9 +11,11 @@ const double factorCone = 1.489078384909734;
 const double factorConeError = 0.0007875838112872804;
 
 
-QeSample::QeSample(string week){
+QeSample::QeSample(string week, int run_min, int run_max){
 
     Week = week;
+    rmin = run_min;
+    rmax = run_max;
 
     HoleLabels(); // read the list of hole labels
     ChosenPmts(); // mark which PMTs are B900
@@ -125,12 +127,19 @@ void QeSample::Update(Run* r){
         }
     }
 
+    // if rmin is defined (is non zero) and the run is out of boundaries, do not count it as first
+    int runnum = r->GetRunNumber(); 
+    if(rmin && (runnum < rmin || runnum > rmax)){
+        cout << "(run out of boundaries)" << endl;
+        return;
+    }
+
     // add info if new profile ID encountered (or just first run)
     int pid = r->GetProfileID();
     if(prev_profile !=  pid){
-        cout << "New profile: " << pid << " (run " << r->GetRunNumber() << ")" << endl;
+        cout << "New profile: " << pid << " (run " << runnum << ")" << endl;
         ProfileID[n_changes] = pid;
-        RunNumber[n_changes] = r->GetRunNumber();
+        RunNumber[n_changes] = runnum;
         for(int h = 0; h < Nholes; h++) ChannelID[n_changes][h] = r->GetChannel(HoleLabel[h]);
         n_changes++;
         prev_profile = pid;
