@@ -117,6 +117,14 @@ void Run::CollectHits(double radius){
     NLivePmts = ev->GetLaben().GetNLivePmts();
     NLivePmtsA1000 = ev->GetLaben().GetNLivePmtsA1000();
 
+    // if the channel was enabled but collected zero hits, it's a mistake, it is disabled but missing in the database
+    cout << "DisabledChannels bug check..." << endl;
+    for(int lg = 1; lg < 2241; lg++){
+        if(NhitsCandle[lg-1] == 0 && !(Disabled[lg-1] || Reference[lg-1])){
+            cout << "Lg " << lg << " wrongly marked as enabled" << endl;
+            Disabled[lg-1] = 1;
+        }
+    }
 }
 
 
