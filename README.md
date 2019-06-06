@@ -23,11 +23,13 @@ Modules  | Description
 ## Format
 ```
 ./qe_calculation YYYY_MMM_DD input_folder output_folder
+./qe_calculation YYYY_MMM_DD input_folder output_folder run_min run_max
 ```
 
 - week: YYYY_MMM_DD
 - input_folder: folder in which a ```YYYY_MMM_DD.list``` file is stored (containing paths to run files in that week)
 - output_folder: where the outputs ```*_QE.txt``` and ```_Week.txt``` will be saved
+- run_min and run_max: optional boundaries of the week, used when the week is stretched to ignore the runs that don't belong to the week when looking for the first run
 
 Output:
 - ```output_folder/YYYY_MMM_DD_QE.txt```: QE file that will be uploaded to the database
