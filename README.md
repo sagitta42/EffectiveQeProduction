@@ -51,6 +51,9 @@ Database |
          Technical
 ```
 
+# Discarding PMTs
+
+```assign_first_week.py```: since there is no week before the first week, we assign to disabled and discarded PMTs the average QE of the enabled PMTs
 
 ## Python
 
