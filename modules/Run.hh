@@ -1,8 +1,10 @@
-/* Calculation of QE(lg, run) */
+#ifndef _RUN_H
+#define _RUN_H
+
 #include <fstream>
 #include <string>
 #include <vector>
-#include <cmath> // forgot what for
+#include <cmath> // forgot what for; atol?
 #include "TFile.h"
 #include "TTree.h"
 #include "Database.hh"
@@ -11,10 +13,6 @@
 
 using namespace std;
 
-//TSQLServer* db; // does not work because Run.hh is included "twice" in QeSample and main
-
-#ifndef _RUN_H
-#define _RUN_H
 
 class Run{
     public:

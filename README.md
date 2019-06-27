@@ -42,13 +42,13 @@ Note: the folder output_folder should already exist.
 
 ```
 qe_calculation
-|      |   |
-|      | QeSample
-|      | |
-|      Run
-|      | |
-Database |
-         Technical
+|      |   
+| QeSample 
+| |    | | 
+| |    Run 
+| |    | |
+| |    | Technical
+Database
 ```
 
 # Discarding PMTs

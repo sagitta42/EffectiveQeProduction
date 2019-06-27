@@ -33,7 +33,7 @@ int Database::LastValidEvnum(int runnum){
     
     if( result->GetRowCount() == 1) {
         TSQLRow* row = result->Next();
-        return atol(row->GetField(0));
+        return atoi(row->GetField(0));
     }
     else{
         cerr << "Error: ValidRuns LastValidEvent has 0 rows or > 1 row" << endl;

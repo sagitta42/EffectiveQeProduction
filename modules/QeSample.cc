@@ -50,10 +50,14 @@ QeSample::QeSample(string week, int run_min, int run_max){
 
         Nhits[h] = 0;
         NhitsError[h] = 0;
-        QeBias[h] = 0;
+        QeBias[h] = 0; // after bias correction
         QeBiasError[h] = 0;
-        QeCone[h] = 0;
+        QeCone[h] = 0; // after cone scaling
         QeConeError[h] = 0;
+        QeFinal[h] = 0; // after scaling to relative QE between 0.0 and 1.0
+        QeFinalError[h] = 0;
+        QeWoc[h] = 0; // relative scale, but without cone correction
+        QeWocError[h] = 0;
     }
 
     n_changes = 0;
@@ -148,11 +152,13 @@ void QeSample::Update(Run* r){
 }
 
 
-void QeSample::CalculateQE(){
+void QeSample::CalculateQE(Database* d){
     // *** subtract dark noise
+    cout << " --- dark noise" << endl;
     DarkNoise();
     
     // ** calculate "biased" QE (not final)
+    cout << " --- qe" << endl;
     for(int h = 0; h < Nholes; h++){
         // cannot divide if Nevents = 0, Qe = 0 as initialized for such cases
         if(Nevents[h]){
@@ -166,15 +172,23 @@ void QeSample::CalculateQE(){
             
 
     //*** calculate trigger bias correction 
-    // i would still prefer to do it AFTER the cone scaling, but let's see
-    // after dark noise subtraction!
-    ChosenPmtBias();
+    cout << " --- bias" << endl;
+    ChosenPmtBias(); // variable QeBias
 
     // *** scale for cones based on average in the week
-    ScaleConeMC();
+    cout << " --- cone" << endl;
+    ScaleConeMC(); // vaiable QeCone
+
+    // *** calculate final scaled Qe and QeWoc
+    cout << " --- scale" << endl;
+    ScaleQe();
 
     // we are NOT scaling the cone here, just calculating the ratio from data, so later we can check its evolution
     ConeRatioData();
+
+    // assign status: enabled, disabled, discarded. Discarded if didn't see enough statistics. Assign value from prev week to disabled and discarded
+    cout << " --- discard" << endl;
+    DiscardPmts(d);
 
 }
 
@@ -375,6 +389,81 @@ void QeSample::ScaleConeMC(){
 }
 
 
+void QeSample::ScaleQe(){
+    for(int h = 0; h < Nholes; h++){
+        QeFinal[h] = Nevents[h] ? QeCone[h] * factorScale: 0; 
+        QeFinalError[h] = Nevents[h] ? QeFinal[h] * sqrt( pow(QeConeError[h]/QeCone[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
+        // saturation
+        if(QeFinal[h] > 1.0) QeFinal[h] = 1.0;
+
+        QeWoc[h] = Nevents[h] ? QeBias[h] * factorScale: 0;
+        QeWocError[h] = Nevents[h] ? QeWoc[h] * sqrt( pow(QeBiasError[h]/QeBias[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
+    }
+}
+
+
+void QeSample::DiscardPmts(Database* d){
+    // query for the prev week, do once for all PMTs
+    char query[200];
+    sprintf(query, "select \"HoleLabel\", \"Qe\", \"QeError\", \"QeWoc\", \"QeWocError\" from \"QuantumEfficiencyNew\" p where \"RunNumber\" = ( select max(\"RunNumber\") from \"QuantumEfficiencyNew\" where \"RunNumber\" < %i )", RunNumber[0]);
+    TSQLResult* res = d->db->Query(query);
+    
+    if (!res){
+        cerr << "Error querying QuantumEfficiencyNew" << endl;
+        delete d;
+        exit(EXIT_FAILURE);
+    }
+    
+    int nrows = res->GetRowCount();
+    
+    if(!nrows){
+        cerr << "Error: QuantumEfficiencyNew before run " << RunNumber[0] << " has 0 rows" << endl;
+        delete d;
+        exit(EXIT_FAILURE);
+    }
+    
+    // has to be 2212 rows
+    map<int,double> qe;
+    map<int,double> qe_err;
+    map<int,double> qe_woc;
+    map<int,double> qe_woc_err;
+
+    for(int i = 0; i < nrows; i++){
+        TSQLRow* row = res->Next();
+        int hole = atoi(row->GetField(0));
+
+        qe[hole] = atof(row->GetField(1));
+        qe_err[hole] = atof(row->GetField(2));
+        qe_woc[hole] = atof(row->GetField(3));
+        qe_woc_err[hole] = atof(row->GetField(4));
+        
+    }
+
+    // now loop over holes and see which ones need to be discarded
+    
+    for(int h = 0; h < Nholes; h++){
+        Status[h] = Nevents[h] ? 1 : 2; // enabled or disabled
+
+        // discard PMT
+        if(Status[h] == 1 && QeFinalError[h]/QeFinal[h]*100 > 2 && Nevents[h] < 150000) Status[h] = 3;
+
+        // enabled PMTs are fine
+        if(Status[h] == 1) continue;
+
+        int hole = HoleLabel[h];
+//        cout << "...prev value " << hole << endl;
+
+        // replace the values with the ones from last week
+        QeFinal[h] = qe[hole]; 
+        QeFinalError[h] = qe_err[hole];
+        QeWoc[h] = qe_woc[hole]; 
+        QeWocError[h] = qe_woc_err[hole]; 
+    }
+
+}
+
+
+
 
 void QeSample::SaveQE(string output_file){        
     string sep = ","; // separator
@@ -386,29 +475,18 @@ void QeSample::SaveQE(string output_file){
 
     // calculate for each hole ID and save
     for(int h = 0; h < Nholes; h++){
-        double Qe = Nevents[h] ? QeCone[h] * factorScale: 0; 
-        double QeError = Nevents[h] ? Qe * sqrt( pow(QeConeError[h]/QeCone[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
-        // saturation
-        if(Qe > 1.0) Qe = 1.0;
-
-        double QeWoc = Nevents[h] ? QeBias[h] * factorScale: 0;
-        double QeWocError = Nevents[h] ? QeWoc * sqrt( pow(QeBiasError[h]/QeBias[h],2) + pow(factorScaleError/factorScale,2) ) : 0; //
-
-        int Status = Nevents[h] ? 1 : 2; // for now only "enabled" and "disabled" with no "discarded"
-
-
         for(int ch = 0; ch < n_changes; ch++){
             out << RunNumber[ch]
                 << sep << Week
                 << sep << HoleLabel[h]
                 << sep << ProfileID[ch]
                 << sep << ChannelID[ch][h]
-                << sep << Qe
-                << sep << QeError
-                << sep << Status
+                << sep << QeFinal[h]
+                << sep << QeFinalError[h]
+                << sep << Status[h]
                 << sep << DarkRate[h]
-                << sep << QeWoc
-                << sep << QeWocError
+                << sep << QeWoc[h]
+                << sep << QeWocError[h]
                 << sep << NhitsCandle[h]
                 << sep << QeCone[h] * Nevents[h]
                 << sep << QeBias[h] * Nevents[h]
