@@ -22,4 +22,4 @@ $(MPATH)/Database.o: $(MPATH)/Database.hh
 
 $(MPATH)/Run.o: $(MPATH)/Run.hh $(MPATH)/Database.hh
 
-$(MPATH)/QeSample.o: $(MPATH)/QeSample.hh $(MPATH)/Run.hh
+$(MPATH)/QeSample.o: $(MPATH)/QeSample.hh $(MPATH)/Run.hh $(MPATH)/Database.hh

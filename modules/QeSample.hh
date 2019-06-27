@@ -1,6 +1,7 @@
 #ifndef _QESAMPLE_H
 #define _QESAMPLE_H
 
+#include "Database.hh"
 #include "Run.hh"
 
 const int Nholes = 2212;
@@ -13,13 +14,17 @@ class QeSample{
         void HoleLabels();
         void ChosenPmts();
 
-        void DarkNoise();
-        void ChosenPmtBias();
-        void ConeRatioData();
-        void ScaleConeMC();
+        void CalculateQE(Database* d); // calculation with the steps in the methods below:
+
+        void DarkNoise(); // subtract dark noise hits
+        void ChosenPmtBias(); // correct for trigger PMT bias
+        void ScaleConeMC(); // scale according to cone presence 
+        void ScaleQe(); // scale to relative QE from 0.0 to 1.0
+        void DiscardPmts(Database* d); // assign status (enabled, disabled, discarded) and value from prev week
+        
+        void ConeRatioData(); // not used now, used only to get cone to no cone ratio (optional)
 
         void Update(Run* r); // update hits and Nevents seen by each hole label
-        void CalculateQE();
         void SaveQE(string output_file);
         void SaveExtra(string qeextra);
 
@@ -48,10 +53,17 @@ class QeSample{
         double NhitsError[Nholes]; 
         double Qe[Nholes];
         double QeError[Nholes];
-        double QeBias[Nholes]; // trigger bias corrected
+        double QeBias[Nholes];// after bias correction
         double QeBiasError[Nholes];
-        double QeCone[Nholes]; // hits after correcting for cones
+        double QeCone[Nholes];// after cone scaling
         double QeConeError[Nholes]; 
+        double QeFinal[Nholes]; // after scaling to relative QE between 0.0 and 1.0
+        double QeFinalError[Nholes]; 
+        double QeWoc[Nholes]; // relative scale, but without cone correction
+        double QeWocError[Nholes]; 
+        int Status[Nholes]; // 1 = enabled, 2 = disabled, 3 = discarded
+        
+        // extra
         double Ratio_true;
         double Ratio_true_error;
         double Ratio_biased;

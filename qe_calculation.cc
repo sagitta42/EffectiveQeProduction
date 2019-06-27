@@ -52,7 +52,8 @@ void QEcalculation(string week, string input_folder, string output_folder, int r
 	// database
 	Database* d = new Database(); // opens DB
 	string fname;
-	
+
+    cout << "~~~ Collecting data from runs" << endl;
 	while(flist >> fname){
 		Run* r = new Run(fname);
 		
@@ -72,18 +73,19 @@ void QEcalculation(string week, string input_folder, string output_folder, int r
 	}
 
 	cout << "DONE" << endl;
-	flist.close();
-	delete d;
 
-    s->CalculateQE(); // dark noise, then chosen PMT bias, then cones
+    cout << "~~~ Calculating QE" << endl;
+    s->CalculateQE(d); // dark noise, then chosen PMT bias, then cones
     s->SaveQE(qefile);
     
     // weekly extra: not save in "official" mode
     string qeextra = output_folder + "/" + week + "_Week.txt";
 	cout << "--> " << qeextra << endl;
     s->SaveExtra(qeextra);
-	delete s;
 	
     cout << "SAVED" << endl;
+	flist.close();
+	delete s;
+	delete d;
 }
 

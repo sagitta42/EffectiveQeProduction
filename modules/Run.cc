@@ -207,7 +207,7 @@ void Run::DisabledChannels(Database* d){
     for(int i = 0; i < nrows; i++){
         TSQLRow* row = result->Next();
         // lg of a disabled channel
-        int lg = atol(row->GetField(0));
+        int lg = atoi(row->GetField(0));
         Disabled[lg-1] = 1;
     }
 
