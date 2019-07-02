@@ -74,11 +74,13 @@ QE is NOT launched
 
 4. **Non existent week**
 
+```
 $ ./launch_qe.sh 2016_Jun_35
 Importing modules...
 Week: 2016_Jun_35
 Week 2016_Jun_35 does not exist!
 QE is NOT launched
+```
 
 (note: relies on ValidRuns)
 
