@@ -8,15 +8,17 @@ Format: ```./launch_qe.sh YYYY_MMM_DD```
 
 The script calls a python code to compose a list of runs belonging to the given week (if "stretching" is needed, it includes runs from the weeks before and after). Then proceeds to launch a job to borexino_physics using a C++/ROOT macro that calculates QE.
 
-Example:
+### Examples ###
+
+1. **Week that needs stretching**
 
 ```
 $ ./launch_qe.sh 2017_Jul_16
 Importing modules...
-Minimum requirement: 126.0 hours
 Week: 2017_Jul_16
 Runs: 29112 - 29144
 Duration: 64.38 hours
+Minimum requirement: 126.0 hours
 Stretching (if needed)...
 + 29111 ( Jul_09 ) --> 70.37 hours
 + 29151 ( Jul_23 ) --> 76.37 hours
@@ -33,8 +35,54 @@ Final scope: 29106 - 29167
 Input: weeks/2017_Jul_16.list
 Future output: qe_output/2017_Jul_16_QE.txt
 bsub -q borexino_physics -e qe_output/2017_Jul_16.err -o qe_output/2017_Jul_16.log ./qe_calculation 2017_Jul_16 weeks qe_output 29112 29144
-Job <46169416> is submitted to queue <borexino_physics>.
+Job <46170874> is submitted to queue <borexino_physics>.
 ```
+
+2. **Normal week**
+
+```
+$ ./launch_qe.sh 2016_Nov_27
+Importing modules...
+Week: 2016_Nov_27
+Runs: 27759 - 27797
+Duration: 163.86 hours
+Minimum requirement: 126.0 hours
+Stretching (if needed)...
+Final scope: 27759 - 27797
+Input: weeks/2016_Nov_27.list
+Future output: qe_output/2016_Nov_27_QE.txt
+bsub -q borexino_physics -e qe_output/2016_Nov_27.err -o qe_output/2016_Nov_27.log ./qe_calculation 2016_Nov_27 weeks qe_output 27759 27797
+Job <46170569> is submitted to queue <borexino_physics>.
+```
+
+3. **Current week that needs to be stretched -> need to wait for the next week**
+
+```
+$ ./launch_qe.sh 2019_Jun_02
+Importing modules...
+Week: 2019_Jun_02
+Runs: 32691 - 32706
+Duration: 67.35 hours
+Minimum requirement: 126.0 hours
+Stretching (if needed)...
++ 32676 ( May_26 ) --> 73.34 hours
+Next week not present! Please launch me later!
+QE is NOT launched
+```
+
+(note: relies on the information in ValidRuns; "next week does not exist" means is not in ValidRuns)
+
+4. **Non existent week**
+
+$ ./launch_qe.sh 2016_Jun_35
+Importing modules...
+Week: 2016_Jun_35
+Week 2016_Jun_35 does not exist!
+QE is NOT launched
+
+(note: relies on ValidRuns)
+
+
 
 
 ## C++/ROOT macro
