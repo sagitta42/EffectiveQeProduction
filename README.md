@@ -8,6 +8,35 @@ Format: ```./launch_qe.sh YYYY_MMM_DD```
 
 The script calls a python code to compose a list of runs belonging to the given week (if "stretching" is needed, it includes runs from the weeks before and after). Then proceeds to launch a job to borexino_physics using a C++/ROOT macro that calculates QE.
 
+Example:
+
+```
+$ ./launch_qe.sh 2017_Jul_16
+Importing modules...
+Minimum requirement: 126.0 hours
+Week: 2017_Jul_16
+Runs: 29112 - 29144
+Duration: 64.38 hours
+Stretching (if needed)...
++ 29111 ( Jul_09 ) --> 70.37 hours
++ 29151 ( Jul_23 ) --> 76.37 hours
++ 29110 ( Jul_09 ) --> 82.37 hours
++ 29152 ( Jul_23 ) --> 88.36 hours
++ 29109 ( Jul_09 ) --> 94.36 hours
++ 29165 ( Jul_23 ) --> 100.36 hours
++ 29108 ( Jul_09 ) --> 106.35 hours
++ 29166 ( Jul_23 ) --> 112.35 hours
++ 29107 ( Jul_09 ) --> 118.34 hours
++ 29167 ( Jul_23 ) --> 124.34 hours
++ 29106 ( Jul_09 ) --> 130.34 hours
+Final scope: 29106 - 29167
+--> weeks/2017_Jul_16.list
+--> launch_qe_2017_Jul_16.sh
+bsub -q borexino_physics -e qe_output/2017_Jul_16.err -o qe_output/2017_Jul_16.log ./qe_calculation 2017_Jul_16 weeks qe_output 29112 29144
+Job <46169416> is submitted to queue <borexino_physics>.
+```
+
+
 ## C++/ROOT macro
 
 File  | Description
