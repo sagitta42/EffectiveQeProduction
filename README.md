@@ -115,7 +115,7 @@ Modules  | Description
 ```QeSample.cc``` and ```.hh``` | calculating QE on a given list of runs (currently weekly basis, but does not intrinsically depend on each week, calculates QE on any given range of runs)
 ```Run.cc``` and ```.hh``` | collecting hits from 14C in each run
 ```Database.cc``` and ```.hh``` | connecting to databases and reading tables for disabled channels and last valid event number
-```Technical.C``` | other things that are packed to this separate file not to distract in the main code
+```Technical.cc``` | other things that are packed to this separate file not to distract in the main code
 
 ### Format
 ```
