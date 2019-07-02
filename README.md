@@ -1,6 +1,12 @@
 # QE calculation
 
-## Files
+## Main script
+
+The main script to launch QE calculation for a given week is ```launch_qe.sh```.
+Format: ```./launch_qe.sh YYYY_MMM_DD```
+The script calls a python code to compose a list of runs belonging to the given week (if "stretching" is needed, it includes runs from the weeks before and after). Then proceeds to launch a job to borexino_physics using a C++/ROOT macro that calculates QE.
+
+## C++/ROOT macro
 
 File  | Description
 ------------- | -------------
@@ -20,7 +26,7 @@ Modules  | Description
 ```Database.cc``` and ```.hh``` | connecting to databases and reading tables for disabled channels and last valid event number
 ```Technical.C``` | other things that are packed to this separate file not to distract in the main code
 
-## Format
+### Format
 ```
 ./qe_calculation YYYY_MMM_DD input_folder output_folder
 ./qe_calculation YYYY_MMM_DD input_folder output_folder run_min run_max
@@ -28,17 +34,15 @@ Modules  | Description
 
 - week: YYYY_MMM_DD
 - input_folder: folder in which a ```YYYY_MMM_DD.list``` file is stored (containing paths to run files in that week)
-- output_folder: where the outputs ```*_QE.txt``` and ```_Week.txt``` will be saved
+- output_folder: where the outputs ```*_QE.txt```
 - run_min and run_max: optional boundaries of the week, used when the week is stretched to ignore the runs that don't belong to the week when looking for the first run
 
-Output:
-- ```output_folder/YYYY_MMM_DD_QE.txt```: QE file that will be uploaded to the database
-- ```output_folder/YYYY_MMM_DD_Week.txt```: extra information in each week e.g. ratio of cone to no cone etc.
+Output: ```output_folder/YYYY_MMM_DD_QE.txt```: QE file that will be uploaded to the database
 
 Note: the folder output_folder should already exist.
 
 
-## Structure
+### Structure
 
 ```
 qe_calculation
@@ -51,34 +55,16 @@ qe_calculation
 Database
 ```
 
-# Discarding PMTs
+## Python script
 
-```assign_first_week.py```: since there is no week before the first week, we assign to disabled and discarded PMTs the average QE of the enabled PMTs
-```sort_weeks.py```: sort weeks in chronological order (needed for taking perv week value while discarding PMTs)
-
-## Python
-
-1. ```submit-list.py```: generating a submission file for bxsubmitter given a list of weeks and input folder (containing lists of runs for each week)
+1. ```make_week.py```: create a list of runs corresponding to the given week, "stretch" it if needed
+2. ```myweek.py```: class used by make_week.py
 
 Format:
-``` python submit-list.py list_of_weeks.list input_folder macro ```	
-* ```list_of_weeks.list```: list of YYYY_MMM_DD on which to launch the calculation
-* ```input_folder```: folder in which corresponding ```YYYY_MMM_DD.list``` files are stored
-* ```macro```: name of the macro (qe_calculation)
+``` python make_week.py YYYY_MMM_DD ```	
 
 Output:
-* empty folder ```list_of_weeks_macro/``` for future QE output
-* ```list_of_weeks_macro_submission.sh``` with submission lines for each week in the list of weeks
-
-
-2. ```qe_merge.py```
-
-merge the QE results from each week into one table, to later plot using python
-
-Format:
-
-```
-qe_merge.py folder
-```
-
-Output: ```folder.qetotal.csv```
+* on the first run, empty folder ```weeks/``` where the input lists are saved
+* list of runs corresponding to the week (```weeks/YYYY_MMM_DD.list```)
+* on the first run, empty folder ```qe_output/``` where the output files YYYY_MMM_DD_QE.txt will be saved later (as well as long and err files of the submission)
+* a temporary script ```launch_qe_YYYY_MMM_DD.sh``` which inside has a call ```./qe_calculation YYYY_MMM_DD weeks qe_output rmin rmax``` where ```rmin``` and ```rmax``` are the first and last run of the week (needed if the week is "stretched", to give the actual "boundaries" of the week; optional when the week is not "stretched")
