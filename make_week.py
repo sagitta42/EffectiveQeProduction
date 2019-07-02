@@ -23,7 +23,8 @@ def make_week(week):
 
         ## if we went out of boundaries in both prev and next, stop no matter what duration
         if (myweek.pn_cnt[0] == 2) and (myweek.pn_cnt[1] == 2):
-            print 'Merged full prev and next week but still do not reach threshold'
+            print '! Merged full prev and next week but still do not reach threshold !'
+            print 'Launching QE anyway. Cancel job if you disagree'
             myweek.duration = 100000
 
 
