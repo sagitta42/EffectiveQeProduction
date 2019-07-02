@@ -92,7 +92,7 @@ class Week():
             os.mkdir('weeks')
         outname = 'weeks/' + self.week + '.list'            
         dat['cnaf'].to_csv(outname, header=False, index=False)
-        print '-->', outname
+        print 'Input:', outname
 
         # close connection to the DB
         self.conn.close()
@@ -112,7 +112,7 @@ class Week():
         print >> out, 'bsub -q borexino_physics -e qe_output/' + self.week + '.err', '-o qe_output/' + self.week + '.log', './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
         out.close()
         make_executable(outname)
-        print '-->', outname
+        print 'Future output: qe_output/' + self.week + '_QE.txt
 
 
 
