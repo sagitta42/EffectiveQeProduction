@@ -15,9 +15,11 @@ File  | Description
 ```qe_calculation.cc``` | main (compiled with "make")
 ```B900.txt``` | list of B900 PMTs (as in Echidna)
 ```list_of_all_hole_labels_cone.txt``` | list of hole labels and cone information
-```profile_channel_to_hole/``` | txt files for each profile with channel to hole mapping taken from DB (alternative: read directly from DB?)
-```reference_channels/``` | txt files for each profile with channels that are non-ordinary (laser, trigger and CNGS ref. channels) (alternative: read directly from DB?)
+```profile_channel_to_hole/``` | txt files for each profile with channel to hole mapping
+```reference_channels/``` | txt files for each profile with channels that are non-ordinary (laser, trigger and CNGS ref. channels)
 ```modules/``` | included in ```qe_calculation.cc```
+
+Note, hole label and cone information, profile mapping and reference channels information is taken from the database. This is not a huge amount of information which also does not change in time, so I decided to save it offline and read from the txt files to avoid connecting to different databases many times. In principle the macro can read this information directly from the DB. For now it is equivalent, with the only difference that if we have a new profile, either an additional txt file for profile 26 has to be created, or I should move this to the database to make it more universal.
 
 ### Modules
 
