@@ -112,7 +112,7 @@ class Week():
         print >> out, 'bsub -q borexino_physics -e qe_output/' + self.week + '.err', '-o qe_output/' + self.week + '.log', './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
         out.close()
         make_executable(outname)
-        print 'Future output: qe_output/' + self.week + '_QE.txt
+        print 'Future output: qe_output/' + self.week + '_QE.txt'
 
 
 
