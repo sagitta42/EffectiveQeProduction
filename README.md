@@ -3,7 +3,9 @@
 ## Main script
 
 The main script to launch QE calculation for a given week is ```launch_qe.sh```.
+
 Format: ```./launch_qe.sh YYYY_MMM_DD```
+
 The script calls a python code to compose a list of runs belonging to the given week (if "stretching" is needed, it includes runs from the weeks before and after). Then proceeds to launch a job to borexino_physics using a C++/ROOT macro that calculates QE.
 
 ## C++/ROOT macro
