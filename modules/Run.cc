@@ -1,5 +1,5 @@
 #include "Run.hh"
-#include "Technical.C"
+#include "Technical.cc"
 
 // ----------------------------------------------------------------------------- //
 
