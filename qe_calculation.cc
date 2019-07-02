@@ -79,9 +79,9 @@ void QEcalculation(string week, string input_folder, string output_folder, int r
     s->SaveQE(qefile);
     
     // weekly extra: not save in "official" mode
-    string qeextra = output_folder + "/" + week + "_Week.txt";
-	cout << "--> " << qeextra << endl;
-    s->SaveExtra(qeextra);
+//    string qeextra = output_folder + "/" + week + "_Week.txt";
+//	cout << "--> " << qeextra << endl;
+//    s->SaveExtra(qeextra);
 	
     cout << "SAVED" << endl;
 	flist.close();
