@@ -31,7 +31,7 @@ Stretching (if needed)...
 + 29106 ( Jul_09 ) --> 130.34 hours
 Final scope: 29106 - 29167
 --> weeks/2017_Jul_16.list
---> launch_qe_2017_Jul_16.sh
+Future output: qe_output/2017_Jul_16_QE.txt
 bsub -q borexino_physics -e qe_output/2017_Jul_16.err -o qe_output/2017_Jul_16.log ./qe_calculation 2017_Jul_16 weeks qe_output 29112 29144
 Job <46169416> is submitted to queue <borexino_physics>.
 ```
