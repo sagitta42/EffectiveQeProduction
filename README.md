@@ -84,6 +84,14 @@ QE is NOT launched
 
 (note: relies on ValidRuns)
 
+5. **Week that is not enough even after stretching**
+
+Will launch but give a warning message:
+
+```
+! Merged full prev and next week but still do not reach threshold !
+Launching QE anyway. Cancel job if you disagree
+```
 
 
 
