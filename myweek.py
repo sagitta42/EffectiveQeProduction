@@ -27,12 +27,20 @@ class Week():
         
     def get_duration(self):        
         ''' calculate total duration of this week in hours '''
-    
-        sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where date_part('year', \"RunDate\") = " + self.year + " and \"Groups\" = '" + self.group + "';"
+
+        # to get the year, "RunDate" does not work for weeks that start late Dec
+        # RootFiles does not work with a constant number, because there are 1-digit cycles (cycle_9, not cycle_09)
+        # getting cycle from "ProductionCycle" does not work, because there is a mismatch (e.g. ProdC says 8, but in the root path it's 9)
+        # --> simply try shooting for 2 digits, and if that yields an empty table, try for 1 digit
+        sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where substring(\"RootFiles\", 65, 4) = '" + self.year + "' and \"Groups\" = '" + self.group + "';"
         dat = sqlio.read_sql_query(sql, self.conn)
         if len(dat) == 0:
-            print 'Week', self.week, 'does not exist!'
-            sys.exit()
+            # maybe the cycle is 1 digit, try again
+            sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where substring(\"RootFiles\", 64, 4) = '" + self.year + "' and \"Groups\" = '" + self.group + "';"
+            dat = sqlio.read_sql_query(sql, self.conn)
+            if len(dat) == 0:
+               print 'Week', self.week, 'does not exist!'
+               sys.exit()
         # these run boundaries are "official" original ones
         self.rmin = dat['RunNumber'].min()
         self.rmax = dat['RunNumber'].max()
