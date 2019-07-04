@@ -8,7 +8,7 @@ exe="launch_qe_${week}.sh"
 if [ -e $exe ]
 then
     cat $exe
-    ./$exe
+    nohup bxsubmitter $exe
     rm -f $exe
 else
     echo "QE is NOT launched"
