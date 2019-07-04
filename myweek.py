@@ -28,7 +28,7 @@ class Week():
     def get_duration(self):        
         ''' calculate total duration of this week in hours '''
     
-        sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where substring(\"RootFiles\", 65, 4) = '" + self.year + "' and \"Groups\" = '" + self.group + "';"
+        sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where date_part('year', \"RunDate\") = " + self.year + " and \"Groups\" = '" + self.group + "';"
         dat = sqlio.read_sql_query(sql, self.conn)
         if len(dat) == 0:
             print 'Week', self.week, 'does not exist!'
