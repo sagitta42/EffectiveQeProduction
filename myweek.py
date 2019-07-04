@@ -125,8 +125,10 @@ class Week():
 def cnaf_path(s):
     ''' replace bxmaster path by cnaf path '''
     r = s.replace('http://bxmaster-data.lngs.infn.it//bxstorage', '/storage/gpfs_data/borexino')
-    r = r.replace('cycle_18', 'cycle_19')
-    r = r.replace('c18', 'c19')
+    # in ValidRuns the path is in the cycle it was validated in at  that moment; find and replace
+    cycle = r.split('cycle_')[1].split('/')[0]
+    r = r.replace('cycle_' + cycle, 'cycle_19')
+    r = r.replace('c' + cycle, 'c19')
     return r
 
 
