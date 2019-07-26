@@ -24,6 +24,19 @@ QeSample::QeSample(string week, int run_min, int run_max){
 
     NeventsTotal = 0;
     NrunsTotal = 0;
+
+    NhitsGeoB900 = 0;
+    NhitsNormB900 = 0;
+    NhitsGeo = 0;
+    NhitsNorm = 0;
+    NPmtsGeoB900 = 0;
+    NPmtsNormB900 = 0;
+    NPmtsGeo = 0;
+    NPmtsNorm = 0;
+    ChargeGeoB900 = 0;
+    ChargeNormB900 = 0;
+    ChargeGeo = 0;
+    ChargeNorm = 0;
     
     for(int h = 0; h < Nholes; h++){
         // dark rate
@@ -106,6 +119,18 @@ void QeSample::Update(Run* r){
     // get the profile of the run
     NeventsTotal += r->GetNevents(); // total 14C events in a run
     NrunsTotal++; // count this run
+    NhitsGeoB900 += r->GetNhitsGeoB900(); // sum of NhitsGeo in B900 from all 14C events in the run
+    NhitsNormB900 += r->GetNhitsNormB900();
+    NhitsGeo += r->GetNhitsGeo();
+    NhitsNorm += r->GetNhitsNorm();
+    NPmtsGeoB900 += r->GetNPmtsGeoB900(); 
+    NPmtsNormB900 += r->GetNPmtsNormB900(); 
+    NPmtsGeo += r->GetNPmtsGeo(); 
+    NPmtsNorm += r->GetNPmtsNorm(); 
+    ChargeGeoB900 += r->GetChargeGeoB900();
+    ChargeNormB900 += r->GetChargeNormB900();
+    ChargeGeo += r->GetChargeGeo();
+    ChargeNorm += r->GetChargeNorm();
     
     // loop over hole labels and sum up the hits from this run
     for(int h = 0; h < Nholes; h++){
@@ -188,7 +213,7 @@ void QeSample::CalculateQE(Database* d){
 
     // assign status: enabled, disabled, discarded. Discarded if didn't see enough statistics. Assign value from prev week to disabled and discarded
     cout << " --- discard" << endl;
-    DiscardPmts(d);
+   DiscardPmts(d);
 
 }
 
@@ -505,10 +530,22 @@ void QeSample::SaveQE(string output_file){
 void QeSample::SaveExtra(string qeextra){
     // extra once per week
     ofstream extra(qeextra.c_str());
-    extra << "Week,Nevents,Ratio_true,Ratio_true_error,Ratio_biased,Ratio_biased_error,RatioBT,RatioBTError,RatioCNC,RatioCNCError,RatioCNCB900,RatioCNCB900Error" << endl;
+    extra << "Week,Nevents,NhitsGeoB900,NhitsNormB900,NPmtsGeo900,NPmtsNormB900,ChargeGeoB900,ChargeNormB900,NhitsGeo,NhitsNorm,NPmtsGeo,NPmtsNorm,ChargeGeo,ChargeNorm,Ratio_true,Ratio_true_error,Ratio_biased,Ratio_biased_error,RatioBT,RatioBTError,RatioCNC,RatioCNCError,RatioCNCB900,RatioCNCB900Error" << endl;
     string sep = ",";
     extra << Week
         << sep << NeventsTotal
+        << sep << NhitsGeoB900
+        << sep << NhitsNormB900
+        << sep << NPmtsGeoB900
+        << sep << NPmtsNormB900
+        << sep << ChargeGeoB900
+        << sep << ChargeNormB900
+        << sep << NhitsGeo
+        << sep << NhitsNorm
+        << sep << NPmtsGeo
+        << sep << NPmtsNorm
+        << sep << ChargeGeo
+        << sep << ChargeNorm
         << sep << Ratio_true
         << sep << Ratio_true_error
         << sep << Ratio_biased

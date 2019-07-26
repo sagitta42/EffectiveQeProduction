@@ -20,21 +20,30 @@ def make_week(week):
 
     while(myweek.duration < THR):
         myweek.stretch()
+        myweek.stretch_step() # updating which step we are doing, prev or next
 
         ## if we went out of boundaries in both prev and next, stop no matter what duration
-        if (myweek.pn_cnt[0] == 2) and (myweek.pn_cnt[1] == 2):
+        if (myweek.pn_cnt[0] >= 2) and (myweek.pn_cnt[1] >= 2):
             print '! Merged full prev and next week but still do not reach threshold !'
-            print 'Launching QE anyway. Cancel job if you disagree'
-            myweek.duration = 100000
+            note = open('weeks_stretching_not_enough.list', 'a')
+            print >> note, week
+            note.close()
+            return
+#            print 'Using all values from last week'
+#            myweek.copy_last()
+#            print 'Launching QE anyway. Cancel job if you disagree'
+#           myweek.duration = 100000
 
 
     print 'Final scope:', myweek.runs[0], '-', myweek.runs[1]            
 
     # save run paths
-    myweek.save_paths()
+#    myweek.save_paths()
 
     # create QE launching .sh file
     myweek.qe_launch()
+    myweek.massive_sub()
 
 
-make_week(sys.argv[1])    
+if __name__ == '__main__':    
+    make_week(sys.argv[1])    

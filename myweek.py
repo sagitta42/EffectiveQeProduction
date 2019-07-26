@@ -54,24 +54,38 @@ class Week():
 
     def stretch(self):
         ''' make one stretching step: append a run from the week before or after this week one by one'''
+            
+        if self.pn_cnt[self.stretch_idx] >= 2: return
         
         ## get info of the run in the past or future from our week
-        sql = "select \"RunNumber\", \"Duration\", \"Groups\" from \"ValidRuns\" where \"RunNumber\" = "
+        sql = "select \"RunNumber\", \"Duration\", \"Groups\", \"RootFiles\" from \"ValidRuns\" where \"RunNumber\" = "
     
         if self.stretch_idx == 0:
             # stretch back
-            sql += "(select max(\"RunNumber\") from \"ValidRuns\" where \"RunNumber\" < " + str(self.runs[0]) + ");"
+            sql += "(select max(\"RunNumber\") from \"ValidRuns\" where \"Groups\" != 'filling' and \"RunNumber\" < " + str(self.runs[0]) + ");"
         else:
             # stretch forward
-            sql += "(select min(\"RunNumber\") from \"ValidRuns\" where \"RunNumber\" > " + str(self.runs[1]) + ");"
-            
+            sql += "(select min(\"RunNumber\") from \"ValidRuns\" where \"Groups\" != 'filling' and \"RunNumber\" > " + str(self.runs[1]) + ");"
+           
         dat = sqlio.read_sql_query(sql, self.conn)
         # if there is no next week
         if len(dat) == 0:
-            print 'Next week not present! Please launch me later!'
+            print 'Next (prev?) week not present! Please launch me later!'
             sys.exit()
 
-        group = dat['Groups'].loc[0] # e.g. 2018_Jul_09
+#        print dat
+        group = dat['Groups'].loc[0] # e.g. Jul_09
+
+        ## do not use if there are two or more unvalid weeks in between
+        # extract year from path
+        year = dat['RootFiles'].loc[0].split('cycle')[1].split('/')[1]
+        group = year + '_' + group
+        # time difference between this week and last valid week: 7 just means normal, 14 means one week is skipped
+        dt = abs(weektime(group) - weektime(self.week))
+        if(int(dt.days) > 14):
+            print group, ': time difference is more than two weeks! Not stretching'
+            self.pn_cnt[self.stretch_idx] = 3
+            return
 
         # count groups to avoid stretching farther than one week behind or ahead
         if self.pn_group[self.stretch_idx] != group:
@@ -84,10 +98,10 @@ class Week():
             self.runs[self.stretch_idx] = dat['RunNumber'].loc[0]
             print '+', self.runs[self.stretch_idx], '(', group, ') -->', round(self.duration,2), 'hours'
 
+    
+    def stretch_step(self):
         ## update stretch index (if this time we stretched prev, next time will stretch next and vice versa)
         self.stretch_idx = (self.stretch_idx + 1) % 2
-
-
 
     def save_paths(self):
         ''' save run paths '''
@@ -123,7 +137,25 @@ class Week():
         print 'Future output: qe_output/' + self.week + '_QE.txt'
 
 
+    def massive_sub(self):
+        ''' append this week to the total submission '''
+        ## create output folder if it doesn't exist yet
+        if not os.path.exists('qe_output'):
+            os.mkdir('qe_output')
 
+        outname = 'launch_qe_all.sh'
+        out = open(outname, 'a')
+        ## format: ./qe_caltulation YYYY_MMM_DD intput_folder output_folder rmin rmax
+        # rmin and rmax are optional, needed if the week is stretched
+        print >> out, 'bsub -q borexino_physics -e qe_output/' + self.week + '.err', '-o qe_output/' + self.week + '.log', './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
+        out.close()
+        print 'Future output: qe_output/' + self.week + '_QE.txt'
+
+
+    def copy_last(self):
+        ''' Copy the QE values from the last week (done when stretching is not enough)'''
+
+        ##            
 
 ##########
 # helper functions            
@@ -146,3 +178,7 @@ def make_executable(path):
     mode |= (mode & 0o444) >> 2    # copy R bits to X
     os.chmod(path, mode)
 
+
+def weektime(group):
+    ''' convert YYYY_MMM_DD to datetime '''
+    return pd.to_datetime(group.replace('_','-'))

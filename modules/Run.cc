@@ -1,5 +1,5 @@
 #include "Run.hh"
-#include "Technical.cc"
+#include "Technical.C"
 
 // ----------------------------------------------------------------------------- //
 
@@ -29,6 +29,18 @@ Run::Run(string fname){
     NeventsAllPmts = 0;
     NLivePmtsManual = 0;
 
+    NhitsGeoB900 = 0;
+    NhitsNormB900 = 0;
+    NhitsGeo = 0;
+    NhitsNorm = 0;
+    NPmtsGeoB900 = 0;
+    NPmtsNormB900 = 0;
+    NPmtsGeo = 0;
+    NPmtsNorm = 0;
+    ChargeGeoB900 = 0;
+    ChargeNormB900 = 0;
+    ChargeGeo = 0;
+    ChargeNorm = 0;
     for(int lg = 1; lg <= 2240; lg++){
         Disabled[lg-1] = 0; // by default the channel is enabled
         Reference[lg-1] = 0; // by default the channel is not a reference channel
@@ -88,6 +100,19 @@ void Run::CollectHits(double radius){
         
         if(nhits_trigger_pmts){
             NeventsCandle++;
+            const BxLabenCluster& cluster = laben.GetCluster(0);
+            NhitsGeoB900 += cluster.Normalize_geo_Pmts_A1000(cluster.GetNHitsA1000());
+            NhitsNormB900 += laben.NormalizePmtsA1000(cluster.GetNHitsA1000());
+            NhitsGeo += cluster.Normalize_geo_Pmts(cluster.GetNHits());
+            NhitsNorm += laben.NormalizePmts(cluster.GetNHits());
+            NPmtsGeoB900 += cluster.Normalize_geo_Pmts_A1000(cluster.GetNPmtsA1000());
+            NPmtsNormB900 += laben.NormalizePmtsA1000(cluster.GetNPmtsA1000());
+            NPmtsGeo += cluster.Normalize_geo_Pmts(cluster.GetNPmts());
+            NPmtsNorm += laben.NormalizePmts(cluster.GetNPmts());
+            ChargeGeoB900 += cluster.Normalize_geo_Charge_A1000(cluster.GetChargeA1000());
+            ChargeNormB900 += laben.NormalizeChargeA1000(cluster.GetChargeA1000());
+            ChargeGeo += cluster.Normalize_geo_Charge(cluster.GetCharge());
+            ChargeNorm += laben.NormalizeCharge(cluster.GetCharge());
             
             for(int hit = 0; hit < numDecHits; hit++){
                 if(decHits[hit].GetNumCluster() == 1){

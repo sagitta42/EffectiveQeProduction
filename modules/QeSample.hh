@@ -39,6 +39,19 @@ class QeSample{
         int NeventsTotal; // total number of events in all runs in this time window
         int NrunsTotal; // total number of runs in this time window
         
+        double NhitsGeoB900; // sum of NhitsGeo in B900 from all 14C events in this time window
+        double NhitsNormB900;
+        double NhitsGeo;
+        double NhitsNorm;
+        double NPmtsGeoB900;
+        double NPmtsNormB900;
+        double NPmtsGeo;
+        double NPmtsNorm;
+        double ChargeGeoB900;
+        double ChargeNormB900;
+        double ChargeGeo;
+        double ChargeNorm;
+        
         int DarkHits[Nholes]; // sum of dark hits collected over all runs in the week
         double DarkTime[Nholes]; // sum of (NdarkEvents * tGate) from all runs
         double DarkRate[Nholes];

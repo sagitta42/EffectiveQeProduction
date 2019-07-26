@@ -28,6 +28,19 @@ class Run{
         int GetProfileID(){ return profileID; }
         
         int GetNevents(){ return NeventsCandle; } // total in the run
+        
+        double GetNhitsGeoB900(){ return NhitsGeoB900; }
+        double GetNhitsNormB900(){ return NhitsNormB900; }
+        double GetNhitsGeo(){ return NhitsGeo; }
+        double GetNhitsNorm(){ return NhitsNorm; }
+        double GetNPmtsGeoB900(){ return NPmtsGeoB900; }
+        double GetNPmtsNormB900(){ return NPmtsNormB900; }
+        double GetNPmtsGeo(){ return NPmtsGeo; }
+        double GetNPmtsNorm(){ return NPmtsNorm; }
+        double GetChargeGeoB900(){ return ChargeGeoB900; }
+        double GetChargeNormB900(){ return ChargeNormB900; }
+        double GetChargeGeo(){ return ChargeGeo; }
+        double GetChargeNorm(){ return ChargeNorm; }
     
         int GetChannel(int hole){ return ChannelID[hole]; }
         int GetNevents(int lg);
@@ -69,6 +82,19 @@ class Run{
         
         // candle
         int NeventsCandle;
+
+        double NhitsGeoB900;
+        double NhitsNormB900;
+        double NhitsGeo;
+        double NhitsNorm;
+        double NPmtsGeoB900;
+        double NPmtsNorm;
+        double NPmtsGeo;
+        double NPmtsNormB900;
+        double ChargeGeoB900;
+        double ChargeNormB900;
+        double ChargeGeo;
+        double ChargeNorm;
 
         int NhitsCandle[2240]; // 14C hits in each channel throughout the run, the sum of the hits in each 14C event 
         double tCandle[2240]; // [ns] sum of cluster durations of each 14C event
