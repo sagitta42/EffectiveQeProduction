@@ -9,6 +9,9 @@ def make_week(week):
   
     # initialize week
     myweek = Week(week)       
+
+    # get run boundaries of this week using storage/ and ValidRuns
+    myweek.get_runs()
     
     # calculate total duration
     myweek.get_duration()
@@ -38,10 +41,10 @@ def make_week(week):
     print 'Final scope:', myweek.runs[0], '-', myweek.runs[1]            
 
     # save run paths
-#    myweek.save_paths()
+    myweek.save_paths()
 
     # create QE launching .sh file
-    myweek.qe_launch()
+#    myweek.qe_launch()
     myweek.massive_sub()
 
 

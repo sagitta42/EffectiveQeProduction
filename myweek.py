@@ -24,31 +24,45 @@ class Week():
         self.pn_cnt = [0,0] # counting number of prev and next groups, if 2, we stop
         print 'Week:', self.week
 
+
+    def get_runs(self):
+        ''' Get min and max run from storage. These runs are not necessarily valid, but this is the first step '''
+        # list of files from storage
+        runs = [r for r in os.listdir('/storage/gpfs_data/borexino/rootfiles/cycle_19/' + self.year + '/' + self.group) if '.root' in r]
+        # integers
+        runs = [int(r.split('Run')[1].split('_')[0]) for r in runs]
+        self.rmin = min(runs)
+        self.rmax = max(runs)
+        print 'On storage:', self.rmin, '-', self.rmax, '(', len(runs), 'runs )'
+        
+        # getting week runs info trough ValidRuns sucks because there is no year info and it has to be extracted from the RootFiles path
+        # but depending on the cycle it's different, and if during the same week there are paths in different cycles, ......
+        # therefore, we just got the info about runs from storage, now get only valid ones
+        sql = "select \"RunNumber\" from \"ValidRuns\" where \"RunNumber\" >= " + str(self.rmin) + " and \"RunNumber\" <=" + str(self.rmax) + ";"
+        dat = sqlio.read_sql_query(sql, self.conn)
+        
+        if len(dat) == 0:
+            print 'Week', self.week, 'has no runs!'
+            sys.exit()
+        
+        # these run boundaries are "official" original boundaries
+        self.rmin = dat['RunNumber'].min()
+        self.rmax = dat['RunNumber'].max()
+        print 'Valid:', self.rmin, '-', self.rmax, '(', len(dat), 'runs )'
+        
+        # these run boundaries will be updated as the run is stretched
+        self.runs[0] = self.rmin 
+        self.runs[1] = self.rmax
+
+
         
     def get_duration(self):        
         ''' calculate total duration of this week in hours '''
 
-        # to get the year, "RunDate" does not work for weeks that start late Dec
-        # RootFiles does not work with a constant number, because there are 1-digit cycles (cycle_9, not cycle_09)
-        # getting cycle from "ProductionCycle" does not work, because there is a mismatch (e.g. ProdC says 8, but in the root path it's 9)
-        # --> simply try shooting for 2 digits, and if that yields an empty table, try for 1 digit
-        sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where substring(\"RootFiles\", 65, 4) = '" + self.year + "' and \"Groups\" = '" + self.group + "';"
+        sql = "select \"Duration\" from \"ValidRuns\" where \"RunNumber\" >= " + str(self.rmin) + ' and ' + "\"RunNumber\" <= " + str(self.rmax) + ";"
         dat = sqlio.read_sql_query(sql, self.conn)
-        if len(dat) == 0:
-            # maybe the cycle is 1 digit, try again
-            sql = "select \"RunNumber\", \"Duration\" from \"ValidRuns\" where substring(\"RootFiles\", 64, 4) = '" + self.year + "' and \"Groups\" = '" + self.group + "';"
-            dat = sqlio.read_sql_query(sql, self.conn)
-            if len(dat) == 0:
-               print 'Week', self.week, 'does not exist!'
-               sys.exit()
-        # these run boundaries are "official" original ones
-        self.rmin = dat['RunNumber'].min()
-        self.rmax = dat['RunNumber'].max()
-        # these run boundaries will be updated as the run is stretched
-        self.runs[0] = self.rmin 
-        self.runs[1] = self.rmax
+
         self.duration = dat['Duration'].sum() * 1. / 60 / 60
-        print 'Runs:', self.runs[0], '-', self.runs[1]
         print 'Duration:', round(self.duration, 2), 'hours'
 
 
@@ -102,6 +116,7 @@ class Week():
     def stretch_step(self):
         ## update stretch index (if this time we stretched prev, next time will stretch next and vice versa)
         self.stretch_idx = (self.stretch_idx + 1) % 2
+
 
     def save_paths(self):
         ''' save run paths '''
