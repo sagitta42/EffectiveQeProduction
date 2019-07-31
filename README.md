@@ -8,11 +8,11 @@ Format: ```./launch_qe.sh YYYY_MMM_DD```
 
 The script calls a python code to compose a list of runs belonging to the given week (if "stretching" is needed, it includes runs from the weeks before and after). Then proceeds to launch a job to borexino_physics using a C++/ROOT macro that calculates QE.
 
-### Examples ###
+## Examples
 
-1. **Week that needs stretching**
+### 1. Week that needs stretching
 
-```
+```console
 $ ./launch_qe.sh 2017_Jul_16
 Importing modules...
 Week: 2017_Jul_16
@@ -38,9 +38,9 @@ bsub -q borexino_physics -e qe_output/2017_Jul_16.err -o qe_output/2017_Jul_16.l
 Job <46170874> is submitted to queue <borexino_physics>.
 ```
 
-2. **Normal week**
+### 2. Normal week
 
-```
+```console
 $ ./launch_qe.sh 2016_Nov_27
 Importing modules...
 Week: 2016_Nov_27
@@ -55,9 +55,9 @@ bsub -q borexino_physics -e qe_output/2016_Nov_27.err -o qe_output/2016_Nov_27.l
 Job <46170569> is submitted to queue <borexino_physics>.
 ```
 
-3. **Current week that needs to be stretched -> need to wait for the next week**
+### 3. Current week that needs to be stretched -> need to wait for the next week
 
-```
+```console
 $ ./launch_qe.sh 2019_Jun_02
 Importing modules...
 Week: 2019_Jun_02
@@ -72,9 +72,9 @@ QE is NOT launched
 
 (note: relies on the information in ValidRuns; "next week does not exist" means is not in ValidRuns)
 
-4. **Non existent week**
+### 4. Non existent week
 
-```
+```console
 $ ./launch_qe.sh 2016_Jun_35
 Importing modules...
 Week: 2016_Jun_35
@@ -84,16 +84,24 @@ QE is NOT launched
 
 (note: relies on ValidRuns)
 
-5. **Week that is not enough even after stretching**
+### 5. Week that is not enough even after stretching
 
-Will launch but give a warning message:
+Assign values of the previous week. I.e. everything is the same except the channel mapping (RunNumber, ChannelID and ProfileID columns)
 
+```    
+Importing modules...
+Week: YYYY_MMM_DD
+On storage: XXXXX - XXXXX ( XX runs )
+Valid: XXXXX - XXXXX ( XX runs )
+...    
+Assigning all values from previous week...
+Prev week: ['2012_Mar_11']
+Mapping info...
+Profile is different from last week, reassigning profiles and channel mapping
+... 18
+... 19
 ```
-! Merged full prev and next week but still do not reach threshold !
-Launching QE anyway. Cancel job if you disagree
-```
-
-
+Note: this situation has never been observed in all years
 
 ## C++/ROOT macro
 

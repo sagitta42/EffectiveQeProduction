@@ -28,14 +28,13 @@ def make_week(week):
         ## if we went out of boundaries in both prev and next, stop no matter what duration
         if (myweek.pn_cnt[0] >= 2) and (myweek.pn_cnt[1] >= 2):
             print '! Merged full prev and next week but still do not reach threshold !'
-            note = open('weeks_stretching_not_enough.list', 'a')
-            print >> note, week
-            note.close()
+            print 'Assigning all values for all PMTs from the previous week'
+            myweek.assign_prev()
+            del myweek
+#            note = open('weeks_stretching_not_enough.list', 'a')
+#            print >> note, week
+#            note.close()
             return
-#            print 'Using all values from last week'
-#            myweek.copy_last()
-#            print 'Launching QE anyway. Cancel job if you disagree'
-#           myweek.duration = 100000
 
 
     print 'Final scope:', myweek.runs[0], '-', myweek.runs[1]            
@@ -44,8 +43,10 @@ def make_week(week):
     myweek.save_paths()
 
     # create QE launching .sh file
-#    myweek.qe_launch()
-    myweek.massive_sub()
+    myweek.qe_launch()
+#    myweek.massive_sub() # for massive submission mode
+
+    del myweek
 
 
 if __name__ == '__main__':    

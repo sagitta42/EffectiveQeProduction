@@ -23,12 +23,21 @@ class Week():
         self.pn_group = [self.group, self.group] # keeping track of current prev and next groups, not do go out 2 weeks before or after
         self.pn_cnt = [0,0] # counting number of prev and next groups, if 2, we stop
         print 'Week:', self.week
+        
+        ## create output folder if it doesn't exist yet
+        if not os.path.exists('qe_output'):
+            os.mkdir('qe_output')
 
 
     def get_runs(self):
         ''' Get min and max run from storage. These runs are not necessarily valid, but this is the first step '''
         # list of files from storage
-        runs = [r for r in os.listdir('/storage/gpfs_data/borexino/rootfiles/cycle_19/' + self.year + '/' + self.group) if '.root' in r]
+        path = '/storage/gpfs_data/borexino/rootfiles/cycle_19/' + self.year + '/' + self.group
+        if not os.path.exists(path):
+            print 'Week', self.week, 'does not exist!'
+            sys.exit()
+
+        runs = [r for r in os.listdir(path) if '.root' in r]
         # integers
         runs = [int(r.split('Run')[1].split('_')[0]) for r in runs]
         self.rmin = min(runs)
@@ -131,16 +140,10 @@ class Week():
         dat['cnaf'].to_csv(outname, header=False, index=False)
         print 'Input:', outname
 
-        # close connection to the DB
-        self.conn.close()
-        self.conn = None
 
 
     def qe_launch(self):
         ''' create a .sh file which launches the QE calculation '''
-        ## create output folder if it doesn't exist yet
-        if not os.path.exists('qe_output'):
-            os.mkdir('qe_output')
 
         outname = 'launch_qe_' + self.week + '.sh'
         out = open(outname, 'w')
@@ -167,10 +170,91 @@ class Week():
         print 'Future output: qe_output/' + self.week + '_QE.txt'
 
 
-    def copy_last(self):
+    def assign_prev(self):
         ''' Copy the QE values from the last week (done when stretching is not enough)'''
 
-        ##            
+        print 'Assigning all values from previous week...'            
+
+        ## last week QE            
+        conn_qe = psycopg2.connect("host='bxdb.lngs.infn.it' dbname='bx_calib' user=borex_guest")
+        # if prev week has two profiles i.e. profile change in the middle of the week, this query will pick up only the part with the last profile which is fine with us
+        sql = "select  * from \"QuantumEfficiencyNew\" where \"RunNumber\" = (select max(\"RunNumber\") from \"QuantumEfficiencyNew\" where \"RunNumber\" < " + str(self.rmin) + ");"
+        dat = sqlio.read_sql_query(sql, conn_qe)
+        print 'Prev week:', dat['DST_index'].unique()
+
+        ## find out which profile(s) this week corresponds to
+        dfprof = pd.read_csv('ProfileStartRun.csv')
+        dfprof = dfprof.set_index('RunNumber', drop=False)
+        # profile of first run
+        pr1 = dfprof.loc[:self.rmin].iloc[-1]['ProfileID']
+        profiles = [pr1]
+        # last run
+        pr2 = dfprof.loc[:self.rmax].iloc[-1]['ProfileID']
+        if not pr2 == pr1: profiles.append(pr2)
+
+        ## change the mapping info
+        print 'Mapping info...'
+        datfinal = pd.DataFrame()
+        # if the profile of the previous week is the same as this one, simply change the run number
+        prev_prof = dat['ProfileID'].unique()
+        if (len(prev_prof) == 1) and (len(profiles) == 1) and (prev_prof[0] == profiles[0]):
+            print 'Profile is the same as prev week, reassigning run number'
+            datfinal = dat
+            datfinal['RunNumber'] = self.rmin
+        # otherwise need to replace the mapping            
+        else:
+            print 'Profile is different from last week, reassigning profiles and channel mapping'
+            # get rid of the run and channel mapping info, pure QE info
+            dat = dat.drop(['RunNumber','ChannelID'], axis=1)
+            dat = dat.drop_duplicates('HoleLabel')
+            # add mapping for each profile
+            dfprof = dfprof.set_index('ProfileID')
+
+            for pr in profiles:
+                print '...', pr
+                dtemp = dat.copy()
+                # the first profile corresponds to the first run of this week; the later ones to the start of the profile
+                run = self.rmin if pr == profiles[0] else dfprof.loc[pr]['RunNumber']
+                dtemp['RunNumber'] = run
+                dtemp['ProfileID'] = pr
+                # channel mapping
+                dfch = pd.read_csv('profile_channel_to_hole/profile' + str(pr) + 'map.txt', sep = ' ', names = ['ChannelID', 'HoleLabel', 'Cone'])
+                dfch = dfch.sort_values('HoleLabel')
+                dfch = dfch[dfch['HoleLabel'] != 0]
+                # all hole labels
+                allholes = list(pd.read_csv('list_of_all_hole_labels_cone.txt', sep = ' ', names = ['HoleLabel', 'Cone'])['HoleLabel'].unique())
+                dfch = dfch.set_index('HoleLabel')                
+#                print dfch.head(30)
+#                print allholes
+                # add missing holes, assign channel zero (means disabled)
+                dfch = dfch.reindex(allholes) # sorted the same as the QE info, inc. in HoleLabel
+                dfch = dfch.fillna(0)
+                # add channel info
+                dtemp = dtemp.set_index('HoleLabel', drop=False)
+                dtemp['ChannelID'] = dfch['ChannelID'].astype(int) # index is the same, so gets assigned autoimatically
+                datfinal = pd.concat([datfinal, dtemp], ignore_index=True)
+
+        ## change week from prev to this one
+        datfinal['DST_index'] = self.week
+
+        ## correct order
+        datfinal = datfinal[['RunNumber', 'DST_index', 'HoleLabel', 'ProfileID', 'ChannelID', 'Qe', 'QeError', 'Status', 'Noise', 'QeWoc', 'QeWocError', 'NhitsCollected', 'NhitsCone', 'NhitsBias', 'Nevents', 'NeventsFraction', 'NrunsFraction']] 
+        datfinal = datfinal.sort_values(['HoleLabel','RunNumber'])
+        ## save
+        datfinal.to_csv('qe_output/' + self.week + '_QE.txt', index=False)
+
+        conn_qe.close()
+        conn_qe = None # is it like deleting a pointer?
+                
+
+    def __del__(self):
+        # close connection to the DB
+        self.conn.close()
+        self.conn = None
+
+        
+        
+        
 
 ##########
 # helper functions            
