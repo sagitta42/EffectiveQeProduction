@@ -89,14 +89,13 @@ class Week():
         else:
             # stretch forward
             sql += "(select min(\"RunNumber\") from \"ValidRuns\" where \"Groups\" != 'filling' and \"RunNumber\" > " + str(self.runs[1]) + ");"
-           
+                       
         dat = sqlio.read_sql_query(sql, self.conn)
         # if there is no next week
         if len(dat) == 0:
             print 'Next (prev?) week not present! Please launch me later!'
             sys.exit()
 
-#        print dat
         group = dat['Groups'].loc[0] # e.g. Jul_09
 
         ## do not use if there are two or more unvalid weeks in between

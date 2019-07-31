@@ -70,7 +70,7 @@ Next week not present! Please launch me later!
 QE is NOT launched
 ```
 
-(note: relies on the information in ValidRuns; "next week does not exist" means is not in ValidRuns)
+(note: relies on the information in ValidRuns; "next week does not exist" means is not in ValidRuns; i.e. if this is done in cycle 19, a week is present in cycle 18, but not in cycle 19, it will stretch it into that week, but the files in cycle 19 are actually not present, so the job will crash)
 
 ### 4. Non existent week
 
