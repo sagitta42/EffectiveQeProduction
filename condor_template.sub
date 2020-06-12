@@ -1,0 +1,8 @@
+universe = vanilla
+executable = mc_Phase3L/csub_0.sh
+output = mc_Phase3L/csub_0.out
+error = mc_Phase3L/csub_0.err
++MaxRuntime = 21600
+ShouldTransferFiles = YES
+WhenToTransferOutput = ON_EXIT
+queue 1

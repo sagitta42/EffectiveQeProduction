@@ -16,14 +16,14 @@ class Week():
         self.conn = psycopg2.connect("host='bxdb.lngs.infn.it' dbname='bx_runvalidation' user=borex_guest")
         self.runs = [0,0] # run boundaries (min and max) that will be updated as the week is stretched
         # rmin and max which belong to this week "officially" (need to remember if stretched)
-        self.rmin = 0 
+        self.rmin = 0
         self.rmax = 0
         self.duration = 0
         self.stretch_idx = 0 # 0 - prev, 1 - next
         self.pn_group = [self.group, self.group] # keeping track of current prev and next groups, not do go out 2 weeks before or after
         self.pn_cnt = [0,0] # counting number of prev and next groups, if 2, we stop
         print 'Week:', self.week
-        
+
         ## create output folder if it doesn't exist yet
         if not os.path.exists('qe_output'):
             os.mkdir('qe_output')
@@ -43,29 +43,29 @@ class Week():
         self.rmin = min(runs)
         self.rmax = max(runs)
         print 'On storage:', self.rmin, '-', self.rmax, '(', len(runs), 'runs )'
-        
+
         # getting week runs info trough ValidRuns sucks because there is no year info and it has to be extracted from the RootFiles path
         # but depending on the cycle it's different, and if during the same week there are paths in different cycles, ......
         # therefore, we just got the info about runs from storage, now get only valid ones
         sql = "select \"RunNumber\" from \"ValidRuns\" where \"RunNumber\" >= " + str(self.rmin) + " and \"RunNumber\" <=" + str(self.rmax) + ";"
         dat = sqlio.read_sql_query(sql, self.conn)
-        
+
         if len(dat) == 0:
             print 'Week', self.week, 'has no runs!'
             sys.exit()
-        
+
         # these run boundaries are "official" original boundaries
         self.rmin = dat['RunNumber'].min()
         self.rmax = dat['RunNumber'].max()
         print 'Valid:', self.rmin, '-', self.rmax, '(', len(dat), 'runs )'
-        
+
         # these run boundaries will be updated as the run is stretched
-        self.runs[0] = self.rmin 
+        self.runs[0] = self.rmin
         self.runs[1] = self.rmax
 
 
-        
-    def get_duration(self):        
+
+    def get_duration(self):
         ''' calculate total duration of this week in hours '''
 
         sql = "select \"Duration\" from \"ValidRuns\" where \"RunNumber\" >= " + str(self.rmin) + ' and ' + "\"RunNumber\" <= " + str(self.rmax) + ";"
@@ -77,19 +77,19 @@ class Week():
 
     def stretch(self):
         ''' make one stretching step: append a run from the week before or after this week one by one'''
-            
+
         if self.pn_cnt[self.stretch_idx] >= 2: return
-        
+
         ## get info of the run in the past or future from our week
         sql = "select \"RunNumber\", \"Duration\", \"Groups\", \"RootFiles\" from \"ValidRuns\" where \"RunNumber\" = "
-    
+
         if self.stretch_idx == 0:
             # stretch back
             sql += "(select max(\"RunNumber\") from \"ValidRuns\" where \"Groups\" != 'filling' and \"RunNumber\" < " + str(self.runs[0]) + ");"
         else:
             # stretch forward
             sql += "(select min(\"RunNumber\") from \"ValidRuns\" where \"Groups\" != 'filling' and \"RunNumber\" > " + str(self.runs[1]) + ");"
-                       
+
         dat = sqlio.read_sql_query(sql, self.conn)
         # if there is no next week
         if len(dat) == 0:
@@ -120,7 +120,7 @@ class Week():
             self.runs[self.stretch_idx] = dat['RunNumber'].loc[0]
             print '+', self.runs[self.stretch_idx], '(', group, ') -->', round(self.duration,2), 'hours'
 
-    
+
     def stretch_step(self):
         ## update stretch index (if this time we stretched prev, next time will stretch next and vice versa)
         self.stretch_idx = (self.stretch_idx + 1) % 2
@@ -128,14 +128,14 @@ class Week():
 
     def save_paths(self):
         ''' save run paths '''
-        
-        # get paths from DB (bxmaster paths)            
+
+        # get paths from DB (bxmaster paths)
         sql = "select \"RootFiles\" from \"ValidRuns\" where \"RunNumber\" >=" + str(self.runs[0]) + " and \"RunNumber\" <= " + str(self.runs[1]) + " order by \"RunNumber\";"
         dat = sqlio.read_sql_query(sql, self.conn)
         dat['cnaf'] = dat['RootFiles'].apply(cnaf_path)
         if not os.path.exists('weeks'):
             os.mkdir('weeks')
-        outname = 'weeks/' + self.week + '.list'            
+        outname = 'weeks/' + self.week + '.list'
         dat['cnaf'].to_csv(outname, header=False, index=False)
         print 'Input:', outname
 
@@ -144,14 +144,41 @@ class Week():
     def qe_launch(self):
         ''' create a .sh file which launches the QE calculation '''
 
-        outname = 'launch_qe_' + self.week + '.sh'
-        out = open(outname, 'w')
-        ## format: ./qe_caltulation YYYY_MMM_DD intput_folder output_folder rmin rmax
-        # rmin and rmax are optional, needed if the week is stretched
-        print >> out, 'bsub -q borexino_physics -e qe_output/' + self.week + '.err', '-o qe_output/' + self.week + '.log', './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
-        out.close()
-        make_executable(outname)
+        ## bsub system
+        # outname = 'launch_qe_' + self.week + '.sh'
+        # out = open(outname, 'w')
+        # ## format: ./qe_caltulation YYYY_MMM_DD intput_folder output_folder rmin rmax
+        # # rmin and rmax are optional, needed if the week is stretched
+        # print >> out, 'bsub -q borexino_physics -e qe_output/' + self.week + '.err',\
+        #     '-o qe_output/' + self.week + '.log', './qe_calculation', self.week,\
+        #     'weeks qe_output', self.rmin, self.rmax
+        # out.close()
+        # make_executable(outname)
+        # print 'Future output: qe_output/' + self.week + '_QE.txt'
+
+
+        ## condor system
+        # executable file
+        exename = 'launch_qe_' + self.week + '.sh'
+        exe = open(exename, 'w')
+        print >> exe, './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
+        exe.close()
+        make_executable(exename)
+        print 'Executable file:', exename
+
+        # condor file
+        condorname = 'condor_qe_' + self.week + '.sub'
+        clines = open('condor_template.sub').readlines()
+        clines[1] = 'executable = ' + exename + '\n'
+        # out and err files
+        clines[2] = 'output = qe_output/log_qe_' + self.week + '.log\n'
+        clines[3] = 'error = qe_output/err_qe_' + self.week + '.err\n'
+        condor = open(condorname,'w')
+        condor.writelines(clines)
+        make_executable(condorname)
+        print 'Condor file:', condorname
         print 'Future output: qe_output/' + self.week + '_QE.txt'
+
 
 
     def massive_sub(self):
@@ -172,9 +199,9 @@ class Week():
     def assign_prev(self):
         ''' Copy the QE values from the last week (done when stretching is not enough)'''
 
-        print 'Assigning all values from previous week...'            
+        print 'Assigning all values from previous week...'
 
-        ## last week QE            
+        ## last week QE
         conn_qe = psycopg2.connect("host='bxdb.lngs.infn.it' dbname='bx_calib' user=borex_guest")
         # if prev week has two profiles i.e. profile change in the middle of the week, this query will pick up only the part with the last profile which is fine with us
         sql = "select  * from \"QuantumEfficiencyNew\" where \"RunNumber\" = (select max(\"RunNumber\") from \"QuantumEfficiencyNew\" where \"RunNumber\" < " + str(self.rmin) + ");"
@@ -200,7 +227,7 @@ class Week():
             print 'Profile is the same as prev week, reassigning run number'
             datfinal = dat
             datfinal['RunNumber'] = self.rmin
-        # otherwise need to replace the mapping            
+        # otherwise need to replace the mapping
         else:
             print 'Profile is different from last week, reassigning profiles and channel mapping'
             # get rid of the run and channel mapping info, pure QE info
@@ -222,7 +249,7 @@ class Week():
                 dfch = dfch[dfch['HoleLabel'] != 0]
                 # all hole labels
                 allholes = list(pd.read_csv('list_of_all_hole_labels_cone.txt', sep = ' ', names = ['HoleLabel', 'Cone'])['HoleLabel'].unique())
-                dfch = dfch.set_index('HoleLabel')                
+                dfch = dfch.set_index('HoleLabel')
 #                print dfch.head(30)
 #                print allholes
                 # add missing holes, assign channel zero (means disabled)
@@ -237,26 +264,26 @@ class Week():
         datfinal['DST_index'] = self.week
 
         ## correct order
-        datfinal = datfinal[['RunNumber', 'DST_index', 'HoleLabel', 'ProfileID', 'ChannelID', 'Qe', 'QeError', 'Status', 'Noise', 'QeWoc', 'QeWocError', 'NhitsCollected', 'NhitsCone', 'NhitsBias', 'Nevents', 'NeventsFraction', 'NrunsFraction']] 
+        datfinal = datfinal[['RunNumber', 'DST_index', 'HoleLabel', 'ProfileID', 'ChannelID', 'Qe', 'QeError', 'Status', 'Noise', 'QeWoc', 'QeWocError', 'NhitsCollected', 'NhitsCone', 'NhitsBias', 'Nevents', 'NeventsFraction', 'NrunsFraction']]
         datfinal = datfinal.sort_values(['HoleLabel','RunNumber'])
         ## save
         datfinal.to_csv('qe_output/' + self.week + '_QE.txt', index=False)
 
         conn_qe.close()
         conn_qe = None # is it like deleting a pointer?
-                
+
 
     def __del__(self):
         # close connection to the DB
         self.conn.close()
         self.conn = None
 
-        
-        
-        
+
+
+
 
 ##########
-# helper functions            
+# helper functions
 ##########
 
 
