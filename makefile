@@ -2,7 +2,8 @@
 # Variables to control Makefile operation
 
 CXX = g++
-CXXFLAGS = -Wall -O2 `root-config --cflags --glibs` /storage/gpfs_data/borexino/users/mredchuk/offline_RefVersions/offline_c19/Echidna/rootechidna.so
+CXXFLAGS = -Wall -O2 `root-config --cflags --glibs` /storage/gpfs_data/borexino/users/alessre/offline_RefVersions/offline_c19/Echidna/rootechidna.so
+#CXXFLAGS = -Wall -O2 `root-config --cflags --glibs` /storage/gpfs_data/borexino/users/mredchuk/offline_RefVersions/offline_c19/Echidna/rootechidna.so
 
 MPATH=modules
 INCLUDES= -I$(MPATH) # so that #include in main.cc looks for the files in this folder

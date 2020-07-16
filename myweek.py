@@ -161,6 +161,10 @@ class Week():
         # executable file
         exename = 'launch_qe_' + self.week + '.sh'
         exe = open(exename, 'w')
+        print >> exe, '#!/bin/bash'
+        print >> exe, "source /opt/exp_software/borexino/root32/v5-34-24/bin/thisroot.sh"
+        print >> exe, "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/storage/gpfs_data/borexino/users/mredchuk/offline_RefVersions/offline_c19/Echidna:/storage/gpfs_data/borexino/users/mredchuk/offline_RefVersions/offline_c18/Echidna"
+        print >> exe, 'cd', os.getcwd()
         print >> exe, './qe_calculation', self.week, 'weeks qe_output', self.rmin, self.rmax
         exe.close()
         make_executable(exename)
