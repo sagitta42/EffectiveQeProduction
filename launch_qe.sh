@@ -18,6 +18,8 @@ then
     #rm -f $exe
     ## condor system
     condor_submit -spool -name sn-01.cr.cnaf.infn.it $cdr
+    rm -f $cdr
+    rm -f $exe
 else
     echo "QE is NOT launched"
 fi
